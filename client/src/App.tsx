@@ -132,13 +132,26 @@ function ChatBox({ gameId, username = "You", inGame = false }: ChatBoxProps) {
       // In a real implementation, we would send this to the server
       // socket.emit('chat', { gameId, message, sender: username });
       
+      // Simulate receiving a message reply after 2 seconds
+      if (!inGame) {
+        setTimeout(() => {
+          const autoReply: Message = {
+            id: messages.length + 2,
+            sender: "Alice",
+            content: "Thanks for your message! Would you like to join a word game?",
+            timestamp: new Date()
+          };
+          setMessages(msgs => [...msgs, autoReply]);
+        }, 2000);
+      }
+      
       setMessages([...messages, message]);
       setNewMessage("");
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden chat-box">
       <div className="p-3 bg-blue-600 text-white font-medium flex justify-between items-center">
         <div className="flex items-center">
           {inGame ? `Game Chat${gameId ? ` - Game #${gameId}` : ''}` : "Lobby Chat"}
@@ -1003,11 +1016,49 @@ function App() {
     );
   }
 
+  // Simulate new chat message for demo purposes
+  useEffect(() => {
+    if (isLoggedIn && !currentGame) {
+      // Show a notification after 5 seconds
+      const timer = setTimeout(() => {
+        setNewChatCount(prev => prev + 1);
+        setShowNotification(true);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 5000);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, currentGame]);
+
   return (
     <div 
       ref={appContainerRef}
-      className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center"
+      className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center relative"
     >
+      {/* Chat notification at top of screen */}
+      {showNotification && (
+        <div 
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 animate-bounce cursor-pointer"
+          onClick={() => {
+            resetChatCount();
+            // Scroll to chat if needed
+            const chatElement = document.querySelector('.chat-box');
+            if (chatElement) {
+              chatElement.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9.06 9.06 0 0 0 8 15z"/>
+          </svg>
+          <span className="font-medium">{newChatCount} new message{newChatCount !== 1 ? 's' : ''}</span>
+        </div>
+      )}
+      
       {content}
     </div>
   );
