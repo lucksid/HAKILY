@@ -902,11 +902,8 @@ function App() {
   
   // Helper function to scroll to top of the app container
   const scrollToTop = () => {
-    if (appContainerRef.current) {
-      appContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    // Use window.scrollTo for consistent scrolling behavior
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogin = (name: string) => {
