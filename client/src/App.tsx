@@ -377,6 +377,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const [gameId, setGameId] = useState<string>(`word-${Date.now()}`);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [unreadChatCount, setUnreadChatCount] = useState<number>(3);
+  const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState<number | null>(null);
   
   // Ref for game container to scroll to top
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -487,6 +488,42 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     }
     
     setTimeout(() => setFeedback(null), 3000);
+    
+    // In multiplayer mode, start auto-advance after submission
+    if (playMode === 'multi') {
+      setRoundEnded(true); // End the round after submission
+      
+      // Show feedback for auto-advance
+      setTimeout(() => {
+        setFeedback({
+          message: `Next round in 5 seconds...`,
+          type: "info"
+        });
+      }, 3500);
+      
+      // Start countdown from 5
+      setTimeout(() => {
+        setAutoAdvanceCountdown(5);
+        
+        // Create a 5-second countdown
+        const countdownInterval = setInterval(() => {
+          setAutoAdvanceCountdown(prevCount => {
+            if (prevCount === null || prevCount <= 1) {
+              clearInterval(countdownInterval);
+              return null;
+            }
+            return prevCount - 1;
+          });
+        }, 1000);
+        
+        // Advance to next round after 5 seconds
+        setTimeout(() => {
+          clearInterval(countdownInterval);
+          setAutoAdvanceCountdown(null);
+          startNewRound();
+        }, 5000);
+      }, 3500);
+    }
   };
   
   // Reset the game for a new round
@@ -516,8 +553,38 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     } else {
       // Time's up!
       setRoundEnded(true);
+      
+      // In multiplayer mode, automatically advance to next round after 5 seconds
+      if (playMode === 'multi') {
+        // Update feedback to inform player of auto-advance
+        setFeedback({
+          message: `Time's up! Next round in 5 seconds...`,
+          type: "info"
+        });
+        
+        // Start countdown from 5
+        setAutoAdvanceCountdown(5);
+        
+        // Create a 5-second countdown
+        const countdownInterval = setInterval(() => {
+          setAutoAdvanceCountdown(prevCount => {
+            if (prevCount === null || prevCount <= 1) {
+              clearInterval(countdownInterval);
+              return null;
+            }
+            return prevCount - 1;
+          });
+        }, 1000);
+        
+        // Advance to next round after 5 seconds
+        setTimeout(() => {
+          clearInterval(countdownInterval);
+          setAutoAdvanceCountdown(null);
+          startNewRound();
+        }, 5000);
+      }
     }
-  }, [timeLeft]);
+  }, [timeLeft, playMode]);
   
   // Update total score when submitted words change
   useEffect(() => {
@@ -849,12 +916,22 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
               {/* Action buttons */}
               <div className="flex justify-center space-x-4">
                 {roundEnded ? (
-                  <button
-                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                    onClick={startNewRound}
-                  >
-                    Start New Round
-                  </button>
+                  playMode === 'multi' && autoAdvanceCountdown ? (
+                    <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center space-x-2">
+                      <span>Next round in</span>
+                      <span className="bg-gray-700 text-white px-3 py-1 rounded-full font-bold animate-pulse">
+                        {autoAdvanceCountdown}
+                      </span>
+                      <span>seconds</span>
+                    </div>
+                  ) : (
+                    <button
+                      className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                      onClick={startNewRound}
+                    >
+                      Start New Round
+                    </button>
+                  )
                 ) : (
                   <>
                     <button
