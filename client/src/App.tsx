@@ -1311,15 +1311,20 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
       });
     }
     
-    // Set submitted state and end the round immediately
+    // Set submitted state
     setHasSubmitted(true);
-    setRoundEnded(true); // This will trigger the "Next Problem" button to appear
     
-    // Clear feedback after a few seconds
-    setTimeout(() => setFeedback(null), 3000);
-    
-    // Auto-advance to next problem after 5 seconds in multiplayer mode
-    if (playMode === 'multi') {
+    // In single-player mode, immediately end the round to show the Next button
+    if (playMode === 'single') {
+      setRoundEnded(true);
+    }
+    // In multiplayer mode, start auto-advance after submission
+    else if (playMode === 'multi') {
+      setRoundEnded(true);
+      
+      // Clear feedback after a few seconds
+      setTimeout(() => setFeedback(null), 3000);
+      
       // Start countdown from 5
       setAutoAdvanceCountdown(5);
       
