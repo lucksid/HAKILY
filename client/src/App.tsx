@@ -2109,13 +2109,8 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
       
       // In multiplayer mode, automatically advance to next round after 5 seconds
       if (playMode === 'multi') {
-        // Hide current question if needed
-        if (currentQuestion) {
-          setCurrentQuestion({
-            ...currentQuestion,
-            question: "Time's up! Waiting for next question...",
-          });
-        }
+        // Don't modify the current question - just show feedback message
+        // This prevents the question text from jumping around
         
         // Update feedback to inform player of auto-advance
         setFeedback({
@@ -2538,9 +2533,9 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
                 <div className="flex justify-center mt-6">
                   {roundEnded ? (
                     autoAdvanceCountdown ? (
-                      <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center space-x-2">
+                      <div className="px-6 py-3 bg-blue-600 text-white rounded-md text-lg font-medium flex items-center space-x-2 shadow-lg">
                         <span>Next question in</span>
-                        <span className="bg-gray-700 text-white px-3 py-1 rounded-full font-bold animate-pulse">
+                        <span className="bg-blue-800 text-white px-4 py-2 rounded-full font-bold text-xl animate-pulse">
                           {autoAdvanceCountdown}
                         </span>
                         <span>seconds</span>
