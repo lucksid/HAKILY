@@ -1,0 +1,12 @@
+      // Include information about correctness and points
+      if (isCorrect) {
+        setFeedback({
+          message: `Correct! +${score} points. Waiting for round to complete...`,
+          type: "success"
+        });
+      } else {
+        setFeedback({
+          message: `Incorrect. The answer was ${currentProblem.answer}. Waiting for round to complete...`,
+          type: "error"
+        });
+      }

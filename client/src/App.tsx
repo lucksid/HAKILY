@@ -1316,7 +1316,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     // In multiplayer mode, mark as submitted but don't immediately end the round
     // This allows other players to still submit their answers until time runs out
     else if (playMode === 'multi') {
-      // Only show feedback about submitting
+      // MATH_FEEDBACK_SECTION: Only show feedback about submitting
       setFeedback({
         message: `Answer submitted! Waiting for round to complete...`,
         type: "info"
