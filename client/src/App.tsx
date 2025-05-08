@@ -374,6 +374,8 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const [totalScore, setTotalScore] = useState(0);
   const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
   const [gameId, setGameId] = useState<string>(`word-${Date.now()}`);
+  const [showChat, setShowChat] = useState<boolean>(false);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(3);
   
   // Ref for game container to scroll to top
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -705,6 +707,34 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           }`}>
             Time: {timeLeft}s
           </div>
+          
+          {/* Chat notification icon in multiplayer mode */}
+          {playMode === 'multi' && (
+            <button 
+              className="relative p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center justify-center"
+              onClick={() => {
+                // Toggle chat visibility
+                setShowChat(!showChat);
+                
+                // If opening chat, reset unread count
+                if (!showChat) {
+                  setUnreadChatCount(0);
+                }
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9.06 9.06 0 0 0 8 15z"/>
+              </svg>
+              
+              {/* Notification badge */}
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
+          )}
+          
           <div className="text-sm">
             <span className="text-gray-500">Player:</span>
             <span className="ml-1 font-medium">{username}</span>
@@ -930,13 +960,34 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
         </div>
         
         <div className="md:col-span-1">
-          {/* In-game chat - only show in multiplayer mode */}
+          {/* In-game chat - only show in multiplayer mode when chat is toggled on */}
           {playMode === 'multi' ? (
-            <ChatBox 
-              username={username} 
-              gameId={gameId}
-              inGame={true}
-            />
+            showChat ? (
+              <ChatBox 
+                username={username} 
+                gameId={gameId}
+                inGame={true}
+              />
+            ) : (
+              <div 
+                className="bg-white rounded-lg shadow-md p-4 text-center cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                  setShowChat(true);
+                  setUnreadChatCount(0);
+                }}
+              >
+                <div className="text-2xl mb-3">💬</div>
+                <h3 className="font-bold text-lg mb-1">Game Chat Hidden</h3>
+                <p className="text-sm text-gray-600">
+                  Click here or use the chat icon in the header to show chat
+                  {unreadChatCount > 0 && (
+                    <span className="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                      {unreadChatCount} new
+                    </span>
+                  )}
+                </p>
+              </div>
+            )
           ) : (
             <div className="bg-white rounded-lg shadow-md p-4 text-center">
               <div className="text-2xl mb-3">👤</div>
