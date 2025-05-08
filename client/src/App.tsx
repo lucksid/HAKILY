@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { generateRandomLetters } from "./lib/utils";
 
 // Simple Login Form Component
 function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
@@ -200,7 +201,7 @@ function GameLobby({
 
 // Simple Word Game Component
 function WordGame({ username, onBack }: { username: string, onBack: () => void }) {
-  const letters = ["A", "E", "I", "R", "S", "T", "N"];
+  const [gameLetters, setGameLetters] = useState<string[]>(generateRandomLetters(7));
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
   const [submittedWords, setSubmittedWords] = useState<{word: string, score: number}[]>([]);
   const [timeLeft, setTimeLeft] = useState(30); // Increased to 30 seconds
@@ -241,6 +242,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     setTimeLeft(30);
     setRoundEnded(false);
     setSelectedLetters([]);
+    setGameLetters(generateRandomLetters(7)); // Generate new letters for the new round
   };
   
   // Simulate countdown timer
@@ -317,7 +319,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
               
               {/* Letter tiles */}
               <div className="flex flex-wrap justify-center gap-3 mb-6">
-                {letters.map((letter, index) => (
+                {gameLetters.map((letter, index) => (
                   <button
                     key={index}
                     className={`w-14 h-14 flex items-center justify-center rounded-lg text-2xl font-bold border-2 
