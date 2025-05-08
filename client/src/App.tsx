@@ -424,6 +424,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
       type: "info"
     });
     setTimeout(() => setFeedback(null), 3000);
+    
+    // Scroll to the top of the game area
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   // Simulate countdown timer
@@ -868,10 +871,14 @@ function App() {
   
   const startGame = (gameType: string) => {
     setCurrentGame(gameType);
+    // Scroll to the top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const backToLobby = () => {
     setCurrentGame(null);
+    // Scroll to the top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Main content based on login state and current game
