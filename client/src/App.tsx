@@ -2561,7 +2561,7 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
                 {/* Action buttons */}
                 <div className="flex justify-center mt-6">
                   {roundEnded ? (
-                    playMode === 'multi' && autoAdvanceCountdown ? (
+                    autoAdvanceCountdown ? (
                       <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center space-x-2">
                         <span>Next question in</span>
                         <span className="bg-gray-700 text-white px-3 py-1 rounded-full font-bold animate-pulse">
@@ -2569,13 +2569,17 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
                         </span>
                         <span>seconds</span>
                       </div>
-                    ) : (
+                    ) : playMode === 'single' ? (
                       <button
                         className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                         onClick={startNewRound}
                       >
                         Next Question
                       </button>
+                    ) : (
+                      <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center justify-center">
+                        Waiting for next question...
+                      </div>
                     )
                   ) : (
                     <button
