@@ -796,7 +796,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
             <div className="p-4 bg-blue-600 text-white font-medium">
               Score Progress
             </div>
@@ -823,6 +823,15 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
               </div>
             </div>
           </div>
+          
+          {/* In-game chat - only show in multiplayer mode */}
+          {playMode === 'multi' && (
+            <ChatBox 
+              username={username} 
+              gameId={gameId}
+              inGame={true}
+            />
+          )}
         </div>
       </div>
     </div>
