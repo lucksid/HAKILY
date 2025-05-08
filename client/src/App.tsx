@@ -1316,11 +1316,18 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     // In multiplayer mode, mark as submitted but don't immediately end the round
     // This allows other players to still submit their answers until time runs out
     else if (playMode === 'multi') {
-      // MATH_FEEDBACK_SECTION: Only show feedback about submitting
-      setFeedback({
-        message: `Answer submitted! Waiting for round to complete...`,
-        type: "info"
-      });
+      // MATH_FEEDBACK_SECTION: Include information about correctness and points
+      if (isCorrect) {
+        setFeedback({
+          message: `Correct! +${score} points. Waiting for round to complete...`,
+          type: "success"
+        });
+      } else {
+        setFeedback({
+          message: `Incorrect. The answer was ${currentProblem.answer}. Waiting for round to complete...`,
+          type: "error"
+        });
+      }
       
       // Clear feedback after a few seconds
       setTimeout(() => setFeedback(null), 3000);
