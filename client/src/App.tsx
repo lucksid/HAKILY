@@ -1350,7 +1350,9 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
 
   // Simulate countdown timer
   useEffect(() => {
-    if (gamePhase === "playing" && timeLeft > 0 && !hasSubmitted) {
+    // In multiplayer mode, continue the timer even after submission
+    // In single player mode, stop the timer after submission
+    if (gamePhase === "playing" && timeLeft > 0 && (playMode === 'multi' || !hasSubmitted)) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !roundEnded) {
