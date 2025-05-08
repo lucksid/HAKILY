@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { generateRandomLetters } from "./lib/utils";
 import { isValidWord, checkWordWithAPI } from "./lib/dictionary";
 import { calculateWordScore } from "./lib/gameUtils";
@@ -62,6 +62,8 @@ interface ChatBoxProps {
 }
 
 function ChatBox({ gameId, username = "You", inGame = false }: ChatBoxProps) {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
   // Different initial messages based on context (lobby vs game)
   const getInitialMessages = () => {
     const baseMessages = [
@@ -95,12 +97,27 @@ function ChatBox({ gameId, username = "You", inGame = false }: ChatBoxProps) {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // If new message is not from current user, increment unread count when minimized
+    const lastMessage = messages[messages.length - 1];
+    if (isMinimized && lastMessage && lastMessage.sender !== username && !lastMessage.isSystem) {
+      setUnreadCount(prev => prev + 1);
+    }
+  }, [messages, isMinimized, username]);
   
   // Reload messages when switching between lobby and game
   useEffect(() => {
     setMessages(getInitialMessages());
+    setUnreadCount(0);
   }, [inGame, gameId]);
+
+  // Toggle chat minimization
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+    // Clear unread count when opening the chat
+    if (isMinimized) {
+      setUnreadCount(0);
+    }
+  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,43 +139,71 @@ function ChatBox({ gameId, username = "You", inGame = false }: ChatBoxProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 bg-blue-600 text-white font-medium">
-        {inGame ? `Game Chat${gameId ? ` - Game #${gameId}` : ''}` : "Lobby Chat"}
-      </div>
-      <div className="h-64 overflow-y-auto p-4 space-y-3">
-        {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.sender === username ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-xs rounded-lg px-4 py-2 ${
-              message.isSystem
-                ? "bg-gray-200 text-gray-800"
-                : message.sender === username 
-                ? "bg-blue-100 text-blue-800" 
-                : "bg-gray-100 text-gray-800"
-            }`}>
-              <div className="text-xs font-medium mb-1">
-                {message.sender} · {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-              <div>{message.content}</div>
+      <div className="p-3 bg-blue-600 text-white font-medium flex justify-between items-center">
+        <div className="flex items-center">
+          {inGame ? `Game Chat${gameId ? ` - Game #${gameId}` : ''}` : "Lobby Chat"}
+          {unreadCount > 0 && (
+            <div className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+              {unreadCount}
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={handleSendMessage} className="border-t p-4 flex">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Type a message..."
-        />
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700"
+          )}
+        </div>
+        <button 
+          onClick={toggleMinimize}
+          className="p-1 hover:bg-blue-700 rounded"
         >
-          Send
+          {isMinimized ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-1 0v-9A.5.5 0 0 1 8 3"/>
+              <path d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8"/>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.143 0H.5a.5.5 0 0 1 .5.5v15a.5.5 0 0 1-.5.5H.143a.5.5 0 0 1-.5-.5v-15a.5.5 0 0 1 .5-.5M2.286 1h13.571v14H2.286z"/>
+              <path d="M3 2.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5"/>
+            </svg>
+          )}
         </button>
-      </form>
+      </div>
+      
+      {!isMinimized && (
+        <>
+          <div className="h-64 overflow-y-auto p-4 space-y-3">
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.sender === username ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-xs rounded-lg px-4 py-2 ${
+                  message.isSystem
+                    ? "bg-gray-200 text-gray-800"
+                    : message.sender === username 
+                    ? "bg-blue-100 text-blue-800" 
+                    : "bg-gray-100 text-gray-800"
+                }`}>
+                  <div className="text-xs font-medium mb-1">
+                    {message.sender} · {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div>{message.content}</div>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+          <form onSubmit={handleSendMessage} className="border-t p-4 flex">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Type a message..."
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700"
+            >
+              Send
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 }
@@ -894,11 +939,22 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   );
 }
 
+// Global Chat Notification Context
+import React from "react";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [currentGame, setCurrentGame] = useState<string | null>(null);
   const appContainerRef = useRef<HTMLDivElement>(null);
+  const [newChatCount, setNewChatCount] = useState(0);
+  const [showNotification, setShowNotification] = useState(false);
+  
+  // Reset chat notification count
+  const resetChatCount = () => {
+    setNewChatCount(0);
+    setShowNotification(false);
+  };
   
   // Helper function to scroll to top of the app container
   const scrollToTop = () => {
