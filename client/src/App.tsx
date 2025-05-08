@@ -1146,9 +1146,14 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
   // Generate a new math problem
   const generateNewProblem = () => {
     try {
+      // Map the UI difficulty to the actual difficulty type
+      const problemDifficulty = 
+        difficulty === 'easy' ? 'easy' :
+        difficulty === 'hard' ? 'hard' : 'medium';
+      
       // Create a new problem based on the selected difficulty
-      const problem = generateMathProblem();
-      console.log("Generated new problem:", problem);
+      const problem = generateMathProblem(problemDifficulty);
+      console.log(`Generated new ${problemDifficulty} difficulty problem:`, problem);
       
       // Update the state with the new problem
       setCurrentProblem(problem);
@@ -1393,6 +1398,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                   onClick={() => setDifficulty('easy')}
                 >
                   <div className="font-medium">Easy</div>
+                  <div className="text-xs text-gray-500 mt-1">Small numbers (1-100)</div>
                 </button>
                 
                 <button
@@ -1404,6 +1410,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                   onClick={() => setDifficulty('medium')}
                 >
                   <div className="font-medium">Medium</div>
+                  <div className="text-xs text-gray-500 mt-1">3-digit numbers</div>
                 </button>
                 
                 <button
@@ -1415,6 +1422,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                   onClick={() => setDifficulty('hard')}
                 >
                   <div className="font-medium">Hard</div>
+                  <div className="text-xs text-gray-500 mt-1">Up to 4-digit numbers</div>
                 </button>
               </div>
             </div>
@@ -1450,12 +1458,21 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 Try to reach {targetScore} points {playMode === 'multi' ? 'before your opponents!' : 'to win!'}
               </p>
               <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
-                <li>Solve math problems quickly for bonus points</li>
+                <li>Solve addition, subtraction, multiplication, and division problems</li>
                 <li>Each correct answer earns 10 base points</li>
-                <li>Faster answers earn more bonus points</li>
+                <li>Faster answers earn more bonus points (up to +5)</li>
                 <li>You have 30 seconds per problem</li>
                 {playMode === 'multi' && <li>Chat with other players during the game</li>}
               </ul>
+              
+              <div className="mt-2 p-2 bg-blue-100 rounded-md text-xs text-blue-800">
+                <p className="font-semibold">Difficulty: {difficulty}</p>
+                <p>{
+                  difficulty === 'easy' ? 'Simple problems with smaller numbers (1-100)' :
+                  difficulty === 'medium' ? 'Moderate problems with 3-digit numbers' :
+                  'Challenging problems with numbers up to 4 digits'
+                }</p>
+              </div>
             </div>
             
             <button 
@@ -1658,11 +1675,17 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="font-bold text-blue-800 mb-2">Game Rules</h3>
                 <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
-                  <li>Solve each math problem within 30 seconds</li>
+                  <li>Solve addition, subtraction, multiplication, and division problems</li>
+                  <li>Complete each problem within 30 seconds</li>
                   <li>Each correct answer is worth 10 base points</li>
-                  <li>Answering quickly earns you bonus points</li>
+                  <li>Answering quickly earns you bonus points (up to +5)</li>
                   <li>You can only submit one answer per problem</li>
                   <li>First to reach {targetScore} points wins!</li>
+                  <li className="text-xs mt-1 text-blue-600">Playing on {difficulty} difficulty ({
+                    difficulty === 'easy' ? 'smaller numbers' :
+                    difficulty === 'medium' ? 'medium-sized numbers' :
+                    'large numbers up to 4 digits'
+                  })</li>
                 </ul>
               </div>
             </div>
