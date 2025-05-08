@@ -1256,8 +1256,11 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     // Force window to scroll to top immediately
     window.scrollTo({ top: 0, behavior: 'auto' });
     
+    // Set time based on difficulty
+    const timeForDifficulty = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 25 : 20;
+    
     // Update game state
-    setTimeLeft(30);
+    setTimeLeft(timeForDifficulty);
     setRoundEnded(false);
     setUserAnswer("");
     setHasSubmitted(false);
@@ -1265,7 +1268,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     console.log("New round problem:", problem);
     setCurrentRound(prev => prev + 1);
     setFeedback({
-      message: "New problem! You have 30 seconds to solve it.",
+      message: `New problem! You have ${timeForDifficulty} seconds to solve it.`,
       type: "info"
     });
     setTimeout(() => setFeedback(null), 3000);
@@ -1363,7 +1366,11 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     setCurrentRound(1);
     const problem = generateNewProblem();
     console.log("Initial problem generated:", problem);
-    setTimeLeft(30);
+    
+    // Set time based on difficulty
+    const timeForDifficulty = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 25 : 20;
+    setTimeLeft(timeForDifficulty);
+    
     setRoundEnded(false);
     setHasSubmitted(false);
     
@@ -1520,7 +1527,11 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>Solve addition, subtraction, multiplication, and division problems</li>
                 <li>Each correct answer earns 10 base points</li>
                 <li>Faster answers earn more bonus points (up to +5)</li>
-                <li>You have 30 seconds per problem</li>
+                <li>Time limit depends on difficulty: 
+                  <span className={difficulty === 'easy' ? 'font-semibold text-green-700' : ''}>Easy (30s)</span>, 
+                  <span className={difficulty === 'medium' ? 'font-semibold text-yellow-700' : ''}> Medium (25s)</span>, 
+                  <span className={difficulty === 'hard' ? 'font-semibold text-red-700' : ''}> Hard (20s)</span>
+                </li>
                 {playMode === 'multi' && (
                   <>
                     <li>Chat with other players during the game</li>
@@ -1750,7 +1761,11 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 <h3 className="font-bold text-blue-800 mb-2">Game Rules</h3>
                 <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
                   <li>Solve addition, subtraction, multiplication, and division problems</li>
-                  <li>Complete each problem within 30 seconds</li>
+                  <li>Complete each problem within the time limit: 
+                    <span className={difficulty === 'easy' ? 'font-semibold text-green-700' : ''}> Easy (30s)</span>,
+                    <span className={difficulty === 'medium' ? 'font-semibold text-yellow-700' : ''}> Medium (25s)</span>,
+                    <span className={difficulty === 'hard' ? 'font-semibold text-red-700' : ''}> Hard (20s)</span>
+                  </li>
                   <li>Each correct answer is worth 10 base points</li>
                   <li>Answering quickly earns you bonus points (up to +5)</li>
                   <li>You can only submit one answer per problem</li>
