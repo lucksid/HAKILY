@@ -4,6 +4,7 @@ import { isValidWord, checkWordWithAPI } from "./lib/dictionary";
 import { calculateWordScore } from "./lib/gameUtils";
 import { generateMathProblem, MathProblem } from "./lib/mathProblems";
 import { QuizQuestion, QuizCategory, getRandomQuestion } from "./lib/quizQuestions";
+import { isGitHubPages } from "./lib/deploymentUtils";
 
 // Simple Login Form Component
 function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
@@ -239,9 +240,29 @@ function GameLobby({
   // State for active tab
   const [activeTab, setActiveTab] = useState<'games' | 'history'>('games');
   const lobbyContainerRef = useRef<HTMLDivElement>(null);
+  // Check if running on GitHub Pages
+  const isGitHubDeployment = isGitHubPages();
 
   return (
     <div className="max-w-6xl w-full mx-auto" ref={lobbyContainerRef}>
+      {isGitHubDeployment && (
+        <div className="bg-amber-100 border-l-4 border-amber-500 p-4 mb-6 rounded-md">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-amber-800">GitHub Pages Deployment</h3>
+              <div className="mt-1 text-sm text-amber-700">
+                <p>This is a static demo deployed on GitHub Pages. Multiplayer functionality is disabled and using mock data.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">Hakil<span className="relative">y<span className="absolute -top-1 right-[-18px] text-lg">💡</span></span></h1>
         <div className="flex items-center space-x-4">
@@ -1102,6 +1123,8 @@ function App() {
   const appContainerRef = useRef<HTMLDivElement>(null);
   const [newChatCount, setNewChatCount] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
+  // Check if running on GitHub Pages
+  const isGitHubDeployment = isGitHubPages();
   
   // Reset chat notification count
   const resetChatCount = () => {

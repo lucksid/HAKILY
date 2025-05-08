@@ -67,8 +67,17 @@ export async function fetchUserGameHistory(userId: number, limit: number = 10): 
  * @returns Array of game history items
  */
 export async function fetchGameHistoryByType(gameType: "word" | "math" | "quiz", limit: number = 10): Promise<GameHistoryItem[]> {
+  // When running on GitHub Pages, return filtered mock data
+  if (isGitHubPages()) {
+    console.log(`Running on GitHub Pages - using mock game history data for game type: ${gameType}`);
+    // Filter mock data to only include games of the specified type
+    const allHistory = getMockGameHistory();
+    return allHistory.filter(game => game.gameType === gameType);
+  }
+  
   try {
-    const response = await fetch(`/api/history/type/${gameType}?limit=${limit}`);
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/api/history/type/${gameType}?limit=${limit}`);
     if (!response.ok) {
       throw new Error(`Error fetching game history for type ${gameType}: ${response.statusText}`);
     }
