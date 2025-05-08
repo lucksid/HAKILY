@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { generateRandomLetters } from "./lib/utils";
 import { isValidWord, checkWordWithAPI } from "./lib/dictionary";
 import { calculateWordScore } from "./lib/gameUtils";
@@ -46,31 +46,75 @@ function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
   );
 }
 
-// Simple Chat Component
+// Enhanced Chat Component with Support for In-Game Chat
 interface Message {
   id: number;
   sender: string;
   content: string;
   timestamp: Date;
+  isSystem?: boolean;
 }
 
-function ChatBox() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, sender: "System", content: "Welcome to the chat!", timestamp: new Date() },
-    { id: 2, sender: "Alice", content: "Hi everyone! Who wants to play a word game?", timestamp: new Date(Date.now() - 5 * 60000) },
-    { id: 3, sender: "Bob", content: "I prefer math games. Anyone interested?", timestamp: new Date(Date.now() - 3 * 60000) }
-  ]);
+interface ChatBoxProps {
+  gameId?: string;
+  username: string;
+  inGame?: boolean;
+}
+
+function ChatBox({ gameId, username = "You", inGame = false }: ChatBoxProps) {
+  // Different initial messages based on context (lobby vs game)
+  const getInitialMessages = () => {
+    const baseMessages = [
+      { 
+        id: 1, 
+        sender: "System", 
+        content: inGame 
+          ? `Game chat started. Good luck and have fun!` 
+          : "Welcome to the lobby chat!", 
+        timestamp: new Date(),
+        isSystem: true 
+      }
+    ];
+    
+    if (!inGame) {
+      // Add some example messages in the lobby chat
+      return [
+        ...baseMessages,
+        { id: 2, sender: "Alice", content: "Hi everyone! Who wants to play a word game?", timestamp: new Date(Date.now() - 5 * 60000) },
+        { id: 3, sender: "Bob", content: "I prefer math games. Anyone interested?", timestamp: new Date(Date.now() - 3 * 60000) }
+      ];
+    }
+    
+    return baseMessages;
+  };
+
+  const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+  
+  // Reload messages when switching between lobby and game
+  useEffect(() => {
+    setMessages(getInitialMessages());
+  }, [inGame, gameId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim()) {
       const message: Message = {
         id: messages.length + 1,
-        sender: "You",
-        content: newMessage,
+        sender: username,
+        content: newMessage.trim(),
         timestamp: new Date()
       };
+      
+      // In a real implementation, we would send this to the server
+      // socket.emit('chat', { gameId, message, sender: username });
+      
       setMessages([...messages, message]);
       setNewMessage("");
     }
@@ -79,16 +123,16 @@ function ChatBox() {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="p-4 bg-blue-600 text-white font-medium">
-        Chat
+        {inGame ? `Game Chat${gameId ? ` - Game #${gameId}` : ''}` : "Lobby Chat"}
       </div>
       <div className="h-64 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.sender === "You" ? "justify-end" : "justify-start"}`}>
+          <div key={message.id} className={`flex ${message.sender === username ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-xs rounded-lg px-4 py-2 ${
-              message.sender === "You" 
+              message.isSystem
+                ? "bg-gray-200 text-gray-800"
+                : message.sender === username 
                 ? "bg-blue-100 text-blue-800" 
-                : message.sender === "System" 
-                ? "bg-gray-200 text-gray-800" 
                 : "bg-gray-100 text-gray-800"
             }`}>
               <div className="text-xs font-medium mb-1">
@@ -98,6 +142,7 @@ function ChatBox() {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSendMessage} className="border-t p-4 flex">
         <input
@@ -226,7 +271,7 @@ function GameLobby({
           </div>
           
           <div className="md:col-span-1">
-            <ChatBox />
+            <ChatBox username={username} />
           </div>
         </div>
       )}
@@ -241,9 +286,12 @@ function GameLobby({
   );
 }
 
-// Simple Word Game Component
+// Enhanced Word Game Component with Single/Multiplayer Options
 function WordGame({ username, onBack }: { username: string, onBack: () => void }) {
-  const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
+  // Game phases
+  const [gamePhase, setGamePhase] = useState<"setup" | "playing">("setup");
+  // Game type (single or multiplayer)
+  const [playMode, setPlayMode] = useState<"single" | "multi">("single");
   const [targetScore, setTargetScore] = useState<number>(100);
   const [gameLetters, setGameLetters] = useState<string[]>(generateRandomLetters(7));
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
@@ -254,6 +302,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const [feedback, setFeedback] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [totalScore, setTotalScore] = useState(0);
   const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
+  const [gameId, setGameId] = useState<string>(`word-${Date.now()}`);
   
   // Handle letter selection
   const selectLetter = (letter: string, index: number) => {
@@ -394,7 +443,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     setTotalScore(newTotal);
     
     // Check if player reached the target score
-    if (gameMode === "playing" && newTotal >= targetScore) {
+    if (gamePhase === "playing" && newTotal >= targetScore) {
       setFeedback({
         message: `Congratulations! You've reached the target score of ${targetScore} points!`,
         type: "success"
@@ -402,7 +451,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
       setTimeout(() => {
         if (confirm(`You've reached the target score of ${targetScore} points! Play again?`)) {
           // Reset game for a new game
-          setGameMode("setup");
+          setGamePhase("setup");
           setSubmittedWords([]);
           setTotalScore(0);
         }
@@ -412,14 +461,14 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   
   // Start the game with selected target score
   const startGame = () => {
-    setGameMode("playing");
+    setGamePhase("playing");
     setSubmittedWords([]);
     setTotalScore(0);
     startNewRound();
   };
   
   // Game Setup Screen
-  if (gameMode === "setup") {
+  if (gamePhase === "setup") {
     return (
       <div className="max-w-4xl w-full mx-auto">
         <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
@@ -442,6 +491,38 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           <h2 className="text-2xl font-bold text-center mb-6">Game Setup</h2>
           
           <div className="max-w-md mx-auto space-y-6">
+            {/* Play Mode Selection */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">Game Mode</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  className={`p-4 rounded-lg border-2 text-center ${
+                    playMode === 'single'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setPlayMode('single')}
+                >
+                  <div className="text-2xl mb-2">👤</div>
+                  <div className="font-medium">Single Player</div>
+                  <div className="text-xs text-gray-500 mt-1">Play solo and challenge yourself</div>
+                </button>
+                
+                <button
+                  className={`p-4 rounded-lg border-2 text-center ${
+                    playMode === 'multi'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setPlayMode('multi')}
+                >
+                  <div className="text-2xl mb-2">👥</div>
+                  <div className="font-medium">Multiplayer</div>
+                  <div className="text-xs text-gray-500 mt-1">Play with friends online</div>
+                </button>
+              </div>
+            </div>
+            
             <div>
               <h3 className="font-medium text-gray-700 mb-2">Target Score to Win</h3>
               <div className="flex flex-wrap gap-2 justify-center">
@@ -464,21 +545,27 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
             <div className="bg-blue-50 p-4 rounded-md">
               <h3 className="font-bold text-blue-800 mb-2">Game Overview</h3>
               <p className="text-sm text-blue-700 mb-2">
-                Try to reach {targetScore} points before your opponents!
+                Try to reach {targetScore} points {playMode === 'multi' ? 'before your opponents!' : 'to win!'}
               </p>
               <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
                 <li>Create words using the given letters</li>
                 <li>Vowels are worth 1 point, consonants are worth 2 points</li>
                 <li>Longer words earn bonus points</li>
                 <li>You have 30 seconds per round to submit a word</li>
+                {playMode === 'multi' && <li>Chat with other players during the game</li>}
               </ul>
             </div>
             
             <button 
               className="w-full py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors"
-              onClick={startGame}
+              onClick={() => {
+                setGamePhase("playing");
+                setSubmittedWords([]);
+                setTotalScore(0);
+                startNewRound();
+              }}
             >
-              Start Game
+              {playMode === 'single' ? 'Start Game' : 'Create Multiplayer Game'}
             </button>
           </div>
         </div>
@@ -494,7 +581,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           <button
             onClick={() => {
               // Show warning dialog if game is in progress and target not reached
-              if (gameMode === "playing" && totalScore < targetScore) {
+              if (gamePhase === "playing" && totalScore < targetScore) {
                 setShowExitWarning(true);
               } else {
                 onBack();
