@@ -304,6 +304,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
   const [gameId, setGameId] = useState<string>(`word-${Date.now()}`);
   
+  // Ref for game container to scroll to top
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+  
   // Handle letter selection
   const selectLetter = (letter: string, index: number) => {
     // Only add if not already selected and round not ended and hasn't submitted yet
@@ -426,7 +429,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     setTimeout(() => setFeedback(null), 3000);
     
     // Scroll to the top of the game area
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (gameContainerRef.current) {
+      gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
   
   // Simulate countdown timer
@@ -473,7 +478,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   // Game Setup Screen
   if (gamePhase === "setup") {
     return (
-      <div className="max-w-4xl w-full mx-auto">
+      <div className="max-w-4xl w-full mx-auto" ref={gameContainerRef}>
         <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
           <div className="flex items-center">
             <button
@@ -578,7 +583,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   
   // Main Game Screen
   return (
-    <div className="max-w-4xl w-full mx-auto">
+    <div className="max-w-4xl w-full mx-auto" ref={gameContainerRef}>
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
         <div className="flex items-center">
           <button
@@ -871,14 +876,10 @@ function App() {
   
   const startGame = (gameType: string) => {
     setCurrentGame(gameType);
-    // Scroll to the top of the page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const backToLobby = () => {
     setCurrentGame(null);
-    // Scroll to the top of the page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Main content based on login state and current game
