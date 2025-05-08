@@ -459,13 +459,23 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
       
       // Show appropriate feedback based on validation result
       if (valid) {
+        // Different messages for single and multiplayer modes
+        const message = playMode === 'single' 
+          ? `"${word}" accepted! +${score} points` 
+          : `"${word}" accepted! +${score} points. Waiting for round to complete...`;
+          
         setFeedback({
-          message: `"${word}" accepted! +${score} points`,
+          message,
           type: "success"
         });
       } else {
+        // Different messages for single and multiplayer modes
+        const message = playMode === 'single'
+          ? `"${word}" is not a valid English word. No points earned.`
+          : `"${word}" is not a valid English word. No points earned. Waiting for round to complete...`;
+          
         setFeedback({
-          message: `"${word}" is not a valid English word. No points earned.`,
+          message,
           type: "error"
         });
       }
@@ -482,10 +492,20 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
         isValid: true // Accept the word if the API fails
       }]);
       
-      setFeedback({
-        message: `"${word}" accepted! +${score} points`,
-        type: "success"
-      });
+      // In single-player mode, show simple success message
+      if (playMode === 'single') {
+        setFeedback({
+          message: `"${word}" accepted! +${score} points`,
+          type: "success"
+        });
+      } 
+      // In multiplayer mode, add the waiting message
+      else {
+        setFeedback({
+          message: `"${word}" accepted! +${score} points. Waiting for round to complete...`,
+          type: "success"
+        });
+      }
     }
     
     setTimeout(() => setFeedback(null), 3000);
@@ -497,11 +517,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     // In multiplayer mode, mark as submitted but don't immediately end the round
     // This allows other players to still submit their words until time runs out
     else if (playMode === 'multi') {
-      // Only show feedback about submitting
-      setFeedback({
-        message: `Word submitted! Waiting for round to complete...`,
-        type: "info"
-      });
+      // The feedback messages with points are already set in the valid/invalid check above
+      // No need to duplicate it here as it would override the previous feedback
+      // We've already added the "Waiting for round to complete..." to those messages
       
       // Clear feedback after a few seconds
       setTimeout(() => setFeedback(null), 3000);
