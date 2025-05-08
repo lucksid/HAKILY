@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { generateRandomLetters } from "./lib/utils";
 import { isValidWord, checkWordWithAPI } from "./lib/dictionary";
 import { calculateWordScore } from "./lib/gameUtils";
+import { generateMathProblem, MathProblem } from "./lib/mathProblems";
 
 // Simple Login Form Component
 function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
@@ -314,7 +315,7 @@ function GameLobby({
                 
                 <div 
                   className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
-                  onClick={() => alert("Math game coming soon!")}
+                  onClick={() => onStartGame("math")}
                 >
                   <div className="text-4xl mb-2">🔢</div>
                   <h3 className="font-bold">Math Wizards</h3>
@@ -1057,6 +1058,8 @@ function App() {
     content = <LoginForm onLogin={handleLogin} />;
   } else if (currentGame === "word") {
     content = <WordGame username={username} onBack={backToLobby} />;
+  } else if (currentGame === "math") {
+    content = <MathGame username={username} onBack={backToLobby} />;
   } else {
     content = (
       <GameLobby 
@@ -1111,6 +1114,609 @@ function App() {
       )}
       
       {content}
+    </div>
+  );
+}
+
+// Math Game Component
+function MathGame({ username, onBack }: { username: string, onBack: () => void }) {
+  // Game phases
+  const [gamePhase, setGamePhase] = useState<"setup" | "playing">("setup");
+  // Game type (single or multiplayer)
+  const [playMode, setPlayMode] = useState<"single" | "multi">("single");
+  const [targetScore, setTargetScore] = useState<number>(100);
+  const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null);
+  const [userAnswer, setUserAnswer] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per problem
+  const [roundEnded, setRoundEnded] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [totalScore, setTotalScore] = useState(0);
+  const [submittedAnswers, setSubmittedAnswers] = useState<{problem: string, userAnswer: string, correctAnswer: number, isCorrect: boolean, score: number}[]>([]);
+  const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
+  const [gameId, setGameId] = useState<string>(`math-${Date.now()}`);
+  const [showChat, setShowChat] = useState<boolean>(false);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(2);
+  const [currentRound, setCurrentRound] = useState(1);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  
+  // Ref for game container to scroll to top
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Generate a new math problem
+  const generateNewProblem = () => {
+    const problem = generateMathProblem();
+    setCurrentProblem(problem);
+    return problem;
+  };
+  
+  // Submit current answer
+  const submitAnswer = () => {
+    // Only allow submission if time hasn't elapsed and player hasn't submitted yet
+    if (roundEnded || hasSubmitted || !currentProblem) return;
+    
+    const userNumericAnswer = Number(userAnswer);
+    const isCorrect = !isNaN(userNumericAnswer) && userNumericAnswer === currentProblem.answer;
+    
+    // Calculate score (only if answer is correct)
+    let score = 0;
+    if (isCorrect) {
+      // Base score for correct answer
+      score = 10;
+      
+      // Bonus points based on time left
+      if (timeLeft > 20) score += 5;
+      else if (timeLeft > 10) score += 3;
+    }
+    
+    // Add the answer to submitted answers
+    setSubmittedAnswers([...submittedAnswers, {
+      problem: currentProblem.problem,
+      userAnswer: userAnswer,
+      correctAnswer: currentProblem.answer,
+      isCorrect,
+      score
+    }]);
+    
+    // Show appropriate feedback
+    if (isCorrect) {
+      setFeedback({
+        message: `Correct! +${score} points`,
+        type: "success"
+      });
+      // Update total score
+      setTotalScore(prev => prev + score);
+    } else {
+      setFeedback({
+        message: `Incorrect. The answer was ${currentProblem.answer}.`,
+        type: "error"
+      });
+    }
+    
+    // Set submitted state
+    setHasSubmitted(true);
+    setTimeout(() => setFeedback(null), 3000);
+  };
+  
+  // Start a new round
+  const startNewRound = () => {
+    setTimeLeft(30);
+    setRoundEnded(false);
+    setUserAnswer("");
+    setHasSubmitted(false);
+    generateNewProblem();
+    setCurrentRound(prev => prev + 1);
+    setFeedback({
+      message: "New problem! You have 30 seconds to solve it.",
+      type: "info"
+    });
+    setTimeout(() => setFeedback(null), 3000);
+    
+    // Force window to scroll to top
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+  
+  // Simulate countdown timer
+  useEffect(() => {
+    if (gamePhase === "playing" && timeLeft > 0 && !hasSubmitted) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !roundEnded) {
+      // Time's up!
+      setRoundEnded(true);
+      if (currentProblem) {
+        setFeedback({
+          message: `Time's up! The answer was ${currentProblem.answer}.`,
+          type: "error"
+        });
+        setTimeout(() => setFeedback(null), 3000);
+      }
+    }
+  }, [timeLeft, hasSubmitted, roundEnded, gamePhase, currentProblem]);
+  
+  // Check if player reached the target score
+  useEffect(() => {
+    if (gamePhase === "playing" && totalScore >= targetScore) {
+      setFeedback({
+        message: `Congratulations! You've reached the target score of ${targetScore} points!`,
+        type: "success"
+      });
+      setTimeout(() => {
+        if (confirm(`You've reached the target score of ${targetScore} points! Play again?`)) {
+          // Reset game for a new game
+          setGamePhase("setup");
+          setSubmittedAnswers([]);
+          setTotalScore(0);
+          setCurrentRound(1);
+        }
+      }, 1000);
+    }
+  }, [totalScore, targetScore, gamePhase]);
+  
+  // Start the game
+  const startGame = () => {
+    setGamePhase("playing");
+    setSubmittedAnswers([]);
+    setTotalScore(0);
+    setCurrentRound(1);
+    generateNewProblem();
+    setTimeLeft(30);
+    setRoundEnded(false);
+    setHasSubmitted(false);
+  };
+  
+  // Game Setup Screen
+  if (gamePhase === "setup") {
+    return (
+      <div className="max-w-4xl w-full mx-auto" ref={gameContainerRef}>
+        <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+          <div className="flex items-center">
+            <button
+              onClick={onBack}  
+              className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            >
+              ← Back
+            </button>
+            <h1 className="text-2xl font-bold text-blue-600">Math Wizards</h1>
+          </div>
+          <div className="text-sm">
+            <span className="text-gray-500">Player:</span>
+            <span className="ml-1 font-medium">{username}</span>
+          </div>
+        </header>
+        
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-center mb-6">Game Setup</h2>
+          
+          <div className="max-w-md mx-auto space-y-6">
+            {/* Play Mode Selection */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">Game Mode</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  className={`p-4 rounded-lg border-2 text-center ${
+                    playMode === 'single'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => {
+                    setPlayMode('single');
+                    // Force window to scroll to top
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  <div className="text-2xl mb-2">👤</div>
+                  <div className="font-medium">Single Player</div>
+                  <div className="text-xs text-gray-500 mt-1">Play solo and challenge yourself</div>
+                </button>
+                
+                <button
+                  className={`p-4 rounded-lg border-2 text-center ${
+                    playMode === 'multi'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => {
+                    setPlayMode('multi');
+                    // Force window to scroll to top
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  <div className="text-2xl mb-2">👥</div>
+                  <div className="font-medium">Multiplayer</div>
+                  <div className="text-xs text-gray-500 mt-1">Play with friends online</div>
+                </button>
+              </div>
+            </div>
+            
+            {/* Difficulty Selection */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">Difficulty</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <button
+                  className={`p-3 rounded-lg border-2 text-center ${
+                    difficulty === 'easy'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setDifficulty('easy')}
+                >
+                  <div className="font-medium">Easy</div>
+                </button>
+                
+                <button
+                  className={`p-3 rounded-lg border-2 text-center ${
+                    difficulty === 'medium'
+                      ? 'border-yellow-500 bg-yellow-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setDifficulty('medium')}
+                >
+                  <div className="font-medium">Medium</div>
+                </button>
+                
+                <button
+                  className={`p-3 rounded-lg border-2 text-center ${
+                    difficulty === 'hard'
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setDifficulty('hard')}
+                >
+                  <div className="font-medium">Hard</div>
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-gray-700 mb-2">Target Score to Win</h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[50, 100, 150, 200, 250, 300].map(score => (
+                  <button
+                    key={score}
+                    className={`px-4 py-2 rounded-md ${
+                      targetScore === score 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    }`}
+                    onClick={() => {
+                      setTargetScore(score);
+                      // Force window to scroll to top
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }, 100);
+                    }}
+                  >
+                    {score}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-md">
+              <h3 className="font-bold text-blue-800 mb-2">Game Overview</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                Try to reach {targetScore} points {playMode === 'multi' ? 'before your opponents!' : 'to win!'}
+              </p>
+              <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+                <li>Solve math problems quickly for bonus points</li>
+                <li>Each correct answer earns 10 base points</li>
+                <li>Faster answers earn more bonus points</li>
+                <li>You have 30 seconds per problem</li>
+                {playMode === 'multi' && <li>Chat with other players during the game</li>}
+              </ul>
+            </div>
+            
+            <button 
+              className="w-full py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors"
+              onClick={startGame}
+            >
+              {playMode === 'single' ? 'Start Game' : 'Create Multiplayer Game'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Game Playing Screen
+  return (
+    <div className="max-w-4xl w-full mx-auto" ref={gameContainerRef}>
+      <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+        <div className="flex items-center">
+          <button
+            onClick={() => {
+              // Show warning dialog if game is in progress and target not reached
+              if (gamePhase === "playing" && totalScore < targetScore) {
+                setShowExitWarning(true);
+              } else {
+                onBack();
+              }
+            }}
+            className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+          >
+            ← Back
+          </button>
+          <h1 className="text-2xl font-bold text-blue-600">Math Wizards</h1>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            timeLeft > 10 
+              ? "bg-blue-100 text-blue-800" 
+              : timeLeft > 5 
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-red-100 text-red-800"
+          }`}>
+            Time: {timeLeft}s
+          </div>
+          
+          {/* Chat notification icon in multiplayer mode */}
+          {playMode === 'multi' && (
+            <button 
+              className="relative p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center justify-center"
+              onClick={() => {
+                // Toggle chat visibility
+                setShowChat(!showChat);
+                
+                // If opening chat, reset unread count
+                if (!showChat) {
+                  setUnreadChatCount(0);
+                }
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9.06 9.06 0 0 0 8 15z"/>
+              </svg>
+              
+              {/* Notification badge */}
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
+          )}
+          
+          <div className="text-sm">
+            <span className="text-gray-500">Player:</span>
+            <span className="ml-1 font-medium">{username}</span>
+          </div>
+        </div>
+      </header>
+      
+      {/* Exit Warning Dialog */}
+      {showExitWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-red-600 mb-4">Warning: Game in Progress</h3>
+            <p className="mb-6 text-gray-700">
+              You're about to leave the game before reaching the target score of {targetScore} points. 
+              Your current progress will be lost and you won't be able to return to this game.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowExitWarning(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Continue Playing
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitWarning(false);
+                  onBack();
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Leave Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-3">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="mb-8">
+              <h2 className="text-center text-xl font-bold mb-2">
+                {roundEnded 
+                  ? "Time's up! Round complete" 
+                  : "Solve this math problem"}
+              </h2>
+              <p className="text-center text-gray-600 mb-4">
+                {roundEnded 
+                  ? `You've completed ${submittedAnswers.length} problem${submittedAnswers.length !== 1 ? 's' : ''}!` 
+                  : "Enter your answer below, then click Submit"}
+              </p>
+              
+              {/* Feedback message */}
+              {feedback && (
+                <div className={`mb-2 p-2 rounded-md text-center ${
+                  feedback.type === 'success' ? 'bg-green-100 text-green-800' :
+                  feedback.type === 'error' ? 'bg-red-100 text-red-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {feedback.message}
+                </div>
+              )}
+              
+              {/* Game status */}
+              {hasSubmitted && !roundEnded && (
+                <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded-md text-center">
+                  Answer submitted! Waiting for next round...
+                </div>
+              )}
+              
+              {/* Math problem display */}
+              <div className="my-8 text-center">
+                <div className="text-3xl font-bold mb-4">
+                  {currentProblem ? currentProblem.problem : "Loading problem..."}
+                </div>
+                
+                {/* Answer input */}
+                <div className="flex justify-center mb-6">
+                  <input
+                    type="number"
+                    value={userAnswer}
+                    onChange={(e) => !hasSubmitted && !roundEnded && setUserAnswer(e.target.value)}
+                    className="w-40 px-4 py-2 text-xl font-medium text-center border-2 border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+                    placeholder="Your answer"
+                    disabled={hasSubmitted || roundEnded}
+                  />
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex justify-center space-x-4">
+                  {roundEnded ? (
+                    <button
+                      className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                      onClick={startNewRound}
+                    >
+                      Next Problem
+                    </button>
+                  ) : (
+                    <button
+                      className={`px-6 py-2 rounded-md ${
+                        userAnswer && !hasSubmitted
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-blue-200 text-blue-500 cursor-not-allowed"
+                      }`}
+                      onClick={submitAnswer}
+                      disabled={!userAnswer || hasSubmitted}
+                    >
+                      {hasSubmitted ? "Already Submitted" : "Submit Answer"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Instructions */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-bold text-blue-800 mb-2">Game Rules</h3>
+                <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+                  <li>Solve each math problem within 30 seconds</li>
+                  <li>Each correct answer is worth 10 base points</li>
+                  <li>Answering quickly earns you bonus points</li>
+                  <li>You can only submit one answer per problem</li>
+                  <li>First to reach {targetScore} points wins!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 bg-blue-600 text-white font-medium flex justify-between items-center">
+                <span>Answer History</span>
+                <span className="bg-white text-blue-800 px-2 py-1 rounded-md text-sm font-bold">
+                  Round: {currentRound}
+                </span>
+              </div>
+              <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                {submittedAnswers.length > 0 ? (
+                  submittedAnswers.map((entry, i) => (
+                    <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <div>
+                        <span className="font-medium">{entry.problem} = {entry.correctAnswer}</span>
+                        <div className="text-xs text-gray-500">Your answer: {entry.userAnswer}</div>
+                      </div>
+                      {entry.isCorrect ? (
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
+                          +{entry.score} pts
+                        </span>
+                      ) : (
+                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                          Incorrect
+                        </span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    No answers submitted yet
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 bg-blue-600 text-white font-medium">
+                Score Progress
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-center p-2 bg-blue-50 rounded mb-2">
+                  <span className="font-medium">{username} (You)</span>
+                  <span className="font-bold">
+                    {totalScore} / {targetScore} pts
+                  </span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                  <div 
+                    className="bg-blue-600 h-4 rounded-full" 
+                    style={{ width: `${Math.min(100, (totalScore / targetScore) * 100)}%` }}
+                  />
+                </div>
+                
+                <div className="text-center text-sm text-gray-500">
+                  {totalScore >= targetScore 
+                    ? "Target score reached!" 
+                    : `${targetScore - totalScore} points to win`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="md:col-span-1">
+          {/* In-game chat - only show in multiplayer mode when chat is toggled on */}
+          {playMode === 'multi' ? (
+            showChat ? (
+              <ChatBox 
+                username={username} 
+                gameId={gameId}
+                inGame={true}
+              />
+            ) : (
+              <div 
+                className="bg-white rounded-lg shadow-md p-4 text-center cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                  setShowChat(true);
+                  setUnreadChatCount(0);
+                }}
+              >
+                <div className="text-2xl mb-3">💬</div>
+                <h3 className="font-bold text-lg mb-1">Game Chat Hidden</h3>
+                <p className="text-sm text-gray-600">
+                  Click here or use the chat icon in the header to show chat
+                  {unreadChatCount > 0 && (
+                    <span className="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                      {unreadChatCount} new
+                    </span>
+                  )}
+                </p>
+              </div>
+            )
+          ) : (
+            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="text-2xl mb-3">👤</div>
+              <h3 className="font-bold text-lg mb-1">Single Player Mode</h3>
+              <p className="text-sm text-gray-600">
+                You're playing in single player mode. Switch to multiplayer to chat with other players!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
