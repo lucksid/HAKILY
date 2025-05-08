@@ -933,17 +933,13 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                       </span>
                       <span>seconds</span>
                     </div>
-                  ) : playMode === 'single' ? (
+                  ) : playMode === 'single' && (
                     <button
                       className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                       onClick={startNewRound}
                     >
                       Start New Round
                     </button>
-                  ) : (
-                    <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center justify-center">
-                      Waiting for next round...
-                    </div>
                   )
                 ) : (
                   <>
@@ -1830,17 +1826,13 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                         </span>
                         <span>seconds</span>
                       </div>
-                    ) : playMode === 'single' ? (
+                    ) : playMode === 'single' && (
                       <button
                         className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 text-lg font-medium animate-pulse"
                         onClick={startNewRound}
                       >
                         Next Problem →
                       </button>
-                    ) : (
-                      <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center justify-center">
-                        Waiting for next problem...
-                      </div>
                     )
                   ) : (
                     <button
@@ -2606,17 +2598,13 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
                         </span>
                         <span>seconds</span>
                       </div>
-                    ) : playMode === 'single' ? (
+                    ) : playMode === 'single' && (
                       <button
                         className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                         onClick={startNewRound}
                       >
                         Next Question
                       </button>
-                    ) : (
-                      <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center justify-center">
-                        Waiting for next question...
-                      </div>
                     )
                   ) : (
                     <button
