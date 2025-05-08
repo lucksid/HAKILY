@@ -68,6 +68,7 @@ export type GameState = {
   status: "waiting" | "playing" | "finished";
   timeLeft: number;
   startTime: number;
+  winner?: number | null; // ID of the winning player
 };
 
 export type WordGameData = {

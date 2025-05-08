@@ -1,6 +1,7 @@
 import { GameState, WordGameData } from "@shared/schema";
-import { generateRandomLetters, calculateWordScore, isValidWord } from "../../client/src/lib/dictionary";
-import { calculateWinner } from "../../client/src/lib/gameUtils";
+import { generateRandomLetters } from "../../client/src/lib/utils";
+import { isValidWord } from "../../client/src/lib/dictionary";
+import { calculateWordScore, calculateWinner } from "../../client/src/lib/gameUtils";
 
 export interface WordGame {
   id: number;

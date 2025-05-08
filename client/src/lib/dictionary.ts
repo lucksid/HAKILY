@@ -1,190 +1,112 @@
-// A more comprehensive dictionary for the browser
-// This is a significantly expanded set of words compared to the previous implementation
+// Dictionary validation using an external API
+// We use the Free Dictionary API to validate words
 
-// Create a comprehensive English dictionary set
-const englishWords = new Set([
-  // Common 3-letter words
-  "ace", "act", "add", "age", "ago", "aid", "aim", "air", "ale", "all", "and", "ant", "any", "ape", "apt", "arc", "are", "ark", "arm", "art", "ash", "ask", "ate", 
-  "awe", "axe", "bad", "bag", "ban", "bar", "bat", "bay", "bed", "bee", "beg", "bet", "bid", "big", "bin", "bit", "boa", "bob", "bog", "boo", "bow", "box", "boy", 
-  "bud", "bug", "bum", "bun", "bus", "but", "buy", "cab", "cad", "cam", "can", "cap", "car", "cat", "cob", "cod", "cog", "con", "coo", "cop", "cow", "cry", "cub", 
-  "cue", "cup", "cut", "dab", "dad", "dam", "day", "den", "dew", "did", "die", "dig", "dim", "dip", "doe", "dog", "don", "dot", "dry", "dub", "due", "dug", "dye", 
-  "ear", "eat", "ebb", "egg", "ego", "elf", "elk", "elm", "end", "era", "eve", "eye", "fab", "fad", "fan", "far", "fat", "fax", "fee", "few", "fig", "fin", "fir", 
-  "fit", "fix", "flu", "fly", "foe", "fog", "for", "fox", "fry", "fun", "fur", "gag", "gap", "gas", "gel", "gem", "get", "gig", "gin", "god", "got", "gum", "gun", 
-  "gut", "guy", "gym", "had", "hag", "ham", "has", "hat", "hay", "hem", "hen", "her", "hey", "hid", "him", "hip", "his", "hit", "hog", "hop", "hot", "how", "hub", 
-  "hue", "hug", "hut", "ice", "icy", "ill", "ink", "inn", "ion", "ire", "irk", "its", "ivy", "jab", "jag", "jam", "jar", "jaw", "jay", "jet", "jew", "jig", "job", 
-  "jog", "jot", "joy", "jug", "jut", "keg", "key", "kid", "kin", "kit", "lab", "lac", "lad", "lag", "lam", "lap", "law", "lax", "lay", "lea", "led", "lee", "leg", 
-  "let", "lid", "lie", "lip", "lit", "log", "lot", "low", "lug", "lye", "mad", "mag", "man", "map", "mar", "mat", "maw", "may", "men", "met", "mew", "mid", "mix", 
-  "mob", "mod", "moo", "mop", "mow", "mud", "mug", "mum", "nab", "nag", "nap", "nay", "net", "new", "nib", "nil", "nip", "nit", "nod", "nor", "not", "now", "nun", 
-  "nut", "oaf", "oak", "oar", "oat", "odd", "off", "oft", "oil", "old", "one", "orb", "ore", "our", "out", "owe", "owl", "own", "pad", "pal", "pan", "pap", "par", 
-  "pat", "paw", "pay", "pea", "peg", "pen", "pep", "per", "pet", "pew", "pie", "pig", "pin", "pip", "pit", "ply", "pod", "poo", "pop", "pot", "pow", "pox", "pro", 
-  "pry", "pub", "pug", "pun", "pup", "put", "quo", "rag", "raj", "ram", "ran", "rap", "rat", "raw", "ray", "red", "rib", "rid", "rig", "rim", "rip", "rob", "rod", 
-  "rot", "row", "rub", "rug", "rum", "run", "rut", "rye", "sad", "sag", "sap", "sat", "saw", "say", "sea", "see", "set", "sew", "she", "shy", "sic", "sim", "sin", 
-  "sip", "sir", "sis", "sit", "six", "ski", "sky", "sly", "sob", "sod", "son", "sow", "sox", "soy", "spa", "spy", "stir", "sub", "sue", "sum", "sun", "sup", "tab", 
-  "tad", "tag", "tam", "tan", "tap", "tar", "tat", "tax", "tea", "tee", "ten", "the", "thy", "tic", "tie", "til", "tin", "tip", "toe", "tog", "tom", "ton", "too", 
-  "top", "tow", "toy", "try", "tub", "tug", "tut", "tux", "two", "ugh", "uke", "ult", "ump", "undo", "unit", "unto", "upon", "urge", "urn", "use", "ute", "vac", 
-  "van", "vat", "vee", "vet", "vex", "via", "vie", "vim", "vow", "wad", "wag", "wan", "war", "was", "wax", "way", "web", "wed", "wee", "wet", "who", "why", "wig", 
-  "win", "wit", "woe", "wok", "won", "woo", "wow", "wry", "yak", "yam", "yap", "yaw", "yay", "yea", "yes", "yet", "yew", "yip", "yod", "yog", "yok", "yon", "you", 
-  "yow", "yuk", "yum", "yup", "zag", "zap", "zen", "zig", "zip", "zit", "zoo",
+// Cache to store previously checked words and avoid repeated API calls
+const wordValidationCache: Record<string, boolean> = {};
+
+/**
+ * Check if a word is valid by using an external dictionary API
+ * @param word The word to validate
+ * @returns Promise<boolean> True if the word is valid
+ */
+export async function checkWordWithAPI(word: string): Promise<boolean> {
+  // Ignore empty words or words less than 3 letters
+  if (!word || word.length < 3) return false;
+
+  // Convert to lowercase for consistent checks
+  const normalizedWord = word.toLowerCase();
   
-  // Common 4-letter words
-  "able", "ably", "abut", "ache", "acid", "acme", "acne", "acre", "act", "adds", "afar", "afro", "agar", "aged", "ages", "agog", "ahem", "ahoy", "aide", "aids", 
-  "ails", "aims", "aint", "airs", "airy", "ajar", "akin", "alas", "alga", "alms", "aloe", "also", "alto", "alum", "amen", "amid", "ammo", "amok", "amps", "anal", 
-  "anew", "ankh", "anna", "anon", "ante", "anti", "ants", "anus", "aped", "apes", "apex", "apse", "aqua", "arch", "arcs", "area", "ares", "aria", "arid", "arks", 
-  "arms", "army", "arts", "arty", "arum", "asap", "ashy", "asks", "atom", "atop", "aunt", "aura", "auto", "avid", "avow", "away", "awes", "awls", "awry", "axed", 
-  "axes", "axis", "axle", "axon", "ayes", "baas", "babe", "baby", "back", "bade", "bags", "bail", "bait", "bake", "bald", "bale", "balk", "ball", "balm", "band", 
-  "bane", "bang", "bank", "bans", "barb", "bard", "bare", "bark", "barn", "bars", "base", "bash", "bask", "bass", "bast", "bate", "bath", "bats", "baud", "bawl", 
-  "bays", "bead", "beak", "beam", "bean", "bear", "beat", "beau", "beck", "beds", "beef", "been", "beep", "beer", "bees", "beet", "begs", "bell", "belt", "bend", 
-  "bent", "berg", "berm", "best", "beta", "bets", "bevy", "bias", "bibs", "bide", "bids", "bier", "biff", "bigs", "bike", "bile", "bilk", "bill", "bind", "bins", 
-  "bird", "bite", "bits", "blab", "blah", "blat", "bled", "blew", "blip", "blob", "bloc", "blot", "blow", "blue", "blur", "boar", "boat", "bobs", "bode", "body", 
-  "bogs", "boil", "bold", "bole", "boll", "bolt", "bomb", "bond", "bone", "bong", "bony", "boob", "book", "boom", "boon", "boor", "boos", "boot", "bops", "bore", 
-  "born", "boss", "both", "bots", "bout", "bowl", "bows", "boxy", "boys", "bozo", "brad", "brag", "bran", "bras", "brat", "bray", "bred", "brew", "brie", "brig", 
-  "brim", "brow", "buck", "buds", "buff", "bugs", "bulb", "bulk", "bull", "bump", "bums", "bung", "bunk", "buns", "buoy", "burg", "burl", "burn", "burp", "burr", 
-  "burs", "bury", "bush", "busk", "bust", "busy", "buts", "butt", "buys", "buzz", "byes", "byre", "byte", "cabs", "cads", "cafe", "cage", "cagey", "cake", "caky", 
-  "calf", "call", "calm", "came", "camp", "cams", "cane", "cans", "cant", "cape", "caps", "card", "care", "carp", "cars", "cart", "case", "cash", "cask", "cast", 
-  "cats", "cave", "caws", "cays", "cede", "cell", "cent", "chad", "chai", "chap", "char", "chat", "chef", "chew", "chez", "chic", "chid", "chin", "chip", "chit", 
-  "chop", "chow", "chub", "chug", "chum", "cite", "city", "clad", "clam", "clan", "clap", "claw", "clay", "clef", "clip", "clod", "clog", "clop", "clot", "club", 
-  "clue", "coal", "coat", "coax", "cobs", "cock", "coda", "code", "cods", "coed", "cogs", "coif", "coil", "coin", "coir", "coke", "cola", "cold", "cole", "colt", 
-  "coma", "comb", "come", "comp", "cone", "conk", "cons", "cook", "cool", "coon", "coop", "coos", "coot", "cope", "cops", "copy", "cord", "core", "cork", "corm", 
-  "corn", "cosh", "cost", "cosy", "cote", "cots", "coup", "cove", "cowl", "cows", "cozy", "crab", "crag", "cram", "crap", "craw", "cred", "crew", "crib", "crim", 
-  "crop", "crow", "crud", "crux", "cube", "cubs", "cuds", "cued", "cues", "cuff", "cull", "cult", "cups", "curb", "curd", "cure", "curl", "curs", "curt", "cusp", 
-  "cuss", "cute", "cuts", "cyan", "cyst", "czar", "dabs", "dado", "dads", "daft", "dais", "dale", "dame", "damn", "damp", "dams", "dana", "dane", "dang", "dank", 
-  "dare", "dark", "darn", "dart", "dash", "data", "date", "daub", "dawn", "days", "daze", "dead", "deaf", "deal", "dean", "dear", "debt", "deck", "deed", "deem", 
-  "deep", "deer", "dees", "deft", "defy", "deja", "dele", "deli", "dell", "demo", "dens", "dent", "deny", "dept", "derv", "desk", "deux", "deva", "dews", "dewy", 
-  "dhow", "dial", "dibs", "dice", "dick", "dido", "died", "dies", "diet", "digs", "dike", "dill", "dime", "dims", "dine", "ding", "dins", "dint", "dips", "dire", 
-  "dirk", "dirt", "disc", "dish", "disk", "diss", "diva", "dive", "dock", "docs", "dodo", "doer", "does", "doff", "dogs", "dojo", "dole", "doll", "dolt", "dome", 
-  "doms", "dona", "done", "dong", "dons", "doom", "door", "dope", "dork", "dorm", "dose", "dost", "dote", "doth", "dots", "dour", "dove", "down", "doze", "dozy", 
-  "drab", "drag", "dram", "drat", "draw", "dray", "dreg", "drew", "drie", "drip", "drop", "drug", "drum", "drys", "dual", "dubs", "duck", "duct", "dude", "duds", 
-  "duel", "dues", "duet", "duff", "dugs", "duke", "dull", "duly", "dumb", "dump", "dune", "dung", "dunk", "duns", "duos", "dupe", "dure", "dusk", "dust", "duty", 
-  "dyer", "dyes", "dyke", "dyne", "each", "earl", "earn", "ears", "ease", "east", "easy", "eats", "eaux", "eave", "ebbs", "echo", "ecru", "eddy", "edge", "edgy", 
-  "edit", "eels", "eery", "eggs", "eggy", "egos", "eked", "elks", "elms", "else", "emir", "emit", "emus", "ends", "envy", "eons", "epee", "epic", "eras", "ergo", 
-  "ergs", "eros", "erst", "espy", "etch", "euro", "even", "ever", "eves", "evil", "ewes", "exam", "exec", "exes", "exit", "expo", "eyed", "eyes", "face", "fact", 
-  "fade", "fads", "fady", "fags", "fail", "fain", "fair", "fake", "fall", "fame", "fang", "fans", "fare", "farm", "fart", "fast", "fate", "fats", "faun", "faux", 
-  "fawn", "fays", "faze", "fear", "feat", "feds", "feed", "feel", "fees", "feet", "fell", "felt", "fems", "fend", "fens", "fern", "feta", "feud", "fiat", "fibs", 
-  "fics", "fief", "fife", "figs", "file", "fill", "film", "find", "fine", "fink", "fins", "fire", "firm", "firs", "fish", "fist", "fits", "five", "fixe", "fizz", 
-  "flab", "flag", "flak", "flan", "flap", "flat", "flaw", "flax", "flay", "flea", "fled", "flee", "flew", "flex", "flip", "flit", "floe", "flog", "flop", "flow", 
-  "flub", "flue", "flux", "foal", "foam", "fobs", "foci", "foes", "fogs", "fogy", "foil", "fold", "folk", "fond", "font", "food", "fool", "foot", "fops", "fora", 
-  "forb", "ford", "fore", "fork", "form", "fort", "foul", "four", "fowl", "foxy", "fray", "free", "fret", "friz", "frog", "from", "frow", "fuel", "full", "fume", 
-  "fund", "funk", "furs", "fury", "fuse", "fuss", "fuzz", "gaff", "gaga", "gage", "gags", "gain", "gait", "gala", "gale", "gall", "gals", "game", "gamy", "gang", 
-  "gaol", "gape", "gaps", "garb", "gash", "gasp", "gate", "gave", "gawk", "gawp", "gays", "gaze", "gear", "geed", "geek", "gees", "geld", "gels", "gems", "gene", 
-  "gent", "germ", "gets", "gibe", "gift", "gigs", "gild", "gill", "gilt", "gimp", "gins", "gird", "girl", "girt", "gist", "give", "glad", "glee", "glen", "glia", 
-  "glib", "glob", "glom", "glop", "glow", "glue", "glug", "glum", "glut", "gnar", "gnat", "gnaw", "gnus", "goad", "goal", "goat", "gobs", "gods", "goer", "goes", 
-  "gold", "golf", "gone", "gong", "good", "goof", "gook", "goon", "goop", "gore", "gory", "gosh", "goth", "gout", "gown", "grab", "grad", "gram", "gran", "gray", 
-  "grew", "grey", "grid", "grim", "grin", "grip", "grit", "grub", "guck", "guff", "gulf", "gull", "gulp", "gums", "gung", "guns", "guru", "gush", "gust", "guts", 
-  "guys", "gyms", "gyps", "gyre", "gyro", "hack", "hade", "haft", "hags", "haha", "hahs", "hail", "hair", "hake", "hale", "half", "hall", "halo", "halt", "hams", 
-  "hand", "hang", "hank", "hard", "hare", "hark", "harm", "harp", "hart", "hash", "hasp", "hate", "hath", "hats", "haul", "have", "hawk", "haws", "hays", "haze", 
-  "hazy", "head", "heal", "heap", "hear", "heat", "heck", "heed", "heel", "heft", "heir", "held", "hell", "helm", "help", "hemp", "hems", "hens", "herb", "herd", 
-  "here", "hero", "hers", "heth", "hews", "hick", "hide", "high", "hike", "hill", "hilt", "hims", "hind", "hint", "hips", "hire", "hiss", "hits", "hive", "hoar", 
-  "hoax", "hobo", "hobs", "hock", "hods", "hoed", "hoes", "hogs", "hoke", "hold", "hole", "holt", "holy", "home", "homo", "hone", "honk", "hood", "hoof", "hook", 
-  "hoop", "hoot", "hope", "hops", "hora", "horn", "hors", "hose", "host", "hots", "hour", "hove", "howl", "hows", "hubs", "huck", "hued", "hues", "huff", "huge", 
-  "hugs", "hula", "hulk", "hull", "hump", "hums", "hung", "hunk", "hunt", "hurl", "hurt", "hush", "husk", "huts", "hymn", "hype", "hypo", "iamb", "ibex", "ibis", 
-  "iced", "ices", "icky", "icon", "idea", "ides", "idle", "idly", "idol", "idyl", "iglu", "ills", "imam", "imps", "inch", "info", "inks", "inky", "inns", "into", 
-  "ions", "iota", "ipso", "iran", "iraq", "ired", "ires", "iris", "irks", "iron", "isle", "isms", "itch", "item", "ixia", "izar", "jabs", "jack", "jade", "jags", 
-  "jail", "jake", "jamb", "jams", "jane", "jape", "jars", "jave", "jaws", "jays", "jazz", "jean", "jeep", "jeer", "jees", "jeez", "jefe", "jell", "jerk", "jest", 
-  "jets", "jeux", "jews", "jibs", "jiff", "jigs", "jill", "jilt", "jims", "jink", "jinx", "jive", "jivy", "jobs", "jock", "joes", "joey", "jogs", "john", "join", 
-  "joke", "joky", "jole", "jolt", "josh", "joss", "jota", "jots", "jour", "jowl", "joys", "juba", "jube", "judo", "jugs", "juju", "juke", "july", "jump", "june", 
-  "junk", "jupe", "jura", "jury", "just", "jute", "juts", "kale", "kaon", "kaph", "kays", "keel", "keen", "keep", "kegs", "keir", "kelp", "kelt", "kemp", "kent", 
-  "kept", "kerb", "kerf", "kern", "keys", "khan", "kick", "kids", "kiel", "kiev", "kifs", "kill", "kiln", "kilo", "kilt", "kina", "kind", "kine", "king", "kink", 
-  "kips", "kirk", "kirn", "kish", "kiss", "kist", "kite", "kith", "kits", "kiwi", "knar", "knee", "knew", "knit", "knob", "knot", "know", "knur", "kohl", "kola", 
-  "kong", "kook", "koph", "kors", "koss", "koto", "kris", "kudo", "kudu", "kuna", "kune", "kurd", "kuru", "kwic", "kyak", "kyat", "labs", "lace", "lack", "lacy", 
-  "lade", "lads", "lady", "lags", "laid", "lain", "lair", "lake", "lakh", "laky", "lama", "lamb", "lame", "lamp", "lams", "land", "lane", "lank", "laos", "lapp", 
-  "laps", "lard", "lark", "lash", "lass", "last", "late", "lath", "lats", "laud", "lava", "lave", "lawn", "laws", "lays", "laze", "lazy", "lead", "leaf", "leak", 
-  "leal", "lean", "leap", "lear", "leas", "lech", "leek", "leer", "lees", "left", "legs", "leis", "leks", "lend", "lens", "lent", "less", "lest", "lets", "leva", 
-  "levy", "lewd", "leys", "liar", "lias", "libs", "lice", "lick", "lido", "lids", "lied", "lief", "lien", "lies", "lieu", "life", "lift", "like", "lilt", "lily", 
-  "lima", "limb", "lime", "limo", "limp", "limy", "line", "ling", "link", "lino", "lint", "liny", "lion", "lips", "lira", "lire", "lisp", "list", "lite", "lith", 
-  "live", "load", "loaf", "loam", "loan", "lobe", "lobo", "lobs", "loch", "loci", "lock", "loco", "lode", "loft", "logo", "logs", "loin", "loll", "lone", "long", 
-  "look", "loom", "loon", "loop", "loos", "loot", "lope", "lops", "lord", "lore", "lorn", "lory", "lose", "loss", "lost", "lota", "loth", "lots", "loud", "loup", 
-  "lour", "lout", "love", "lowe", "lows", "luau", "lube", "luck", "ludo", "lues", "luff", "luge", "lugs", "lull", "lulu", "lump", "luna", "lune", "lung", "lunk", 
-  "lunt", "lure", "lurk", "lush", "lust", "lute", "lutz", "luxe", "lyes", "lynx", "lyre", "mace", "mach", "mack", "macs", "made", "mads", "mage", "magi", "mags", 
-  "maid", "mail", "maim", "main", "make", "mako", "male", "mall", "malt", "mama", "mane", "mans", "many", "maps", "marc", "mare", "mark", "marl", "mars", "mart", 
-  "mary", "mash", "mask", "mass", "mast", "mate", "math", "mats", "matt", "maud", "maul", "maut", "maws", "maxi", "maya", "mayo", "mays", "maze", "mazy", "mead", 
-  "meal", "mean", "meat", "meed", "meek", "meet", "meld", "mell", "melt", "memo", "mend", "mens", "menu", "meow", "mere", "mesa", "mesh", "mess", "mete", "mets", 
-  "mews", "mhos", "mibs", "mica", "mice", "mick", "midi", "mids", "mien", "miff", "mike", "mild", "mile", "milk", "mill", "milt", "mils", "mime", "mind", "mine", 
-  "mini", "mink", "mint", "minx", "mire", "miry", "mise", "miso", "miss", "mist", "mite", "mitt", "moan", "moat", "mobs", "mock", "mode", "mods", "moil", "moke", 
-  "mola", "mold", "mole", "moll", "molt", "moly", "moms", "mona", "monk", "mono", "mons", "mony", "mood", "moon", "moor", "moos", "moot", "mope", "mops", "mopy", 
-  "more", "morn", "mors", "mort", "moss", "most", "mote", "moth", "mots", "mott", "moue", "move", "mown", "mows", "moxa", "much", "muck", "muds", "muff", "mugs", 
-  "mule", "mull", "mump", "mums", "murk", "muse", "mush", "musk", "muss", "must", "mute", "mutt", "myra", "myth", "nabs", "nags", "naif", "nail", "name", "nano", 
-  "nape", "naps", "narc", "nard", "nark", "nary", "nave", "navy", "nays", "nazi", "neap", "near", "neat", "neck", "need", "neon", "nerd", "nest", "nets", "neve", 
-  "news", "newt", "next", "nibs", "nice", "nick", "nigh", "nile", "nill", "nils", "nims", "nine", "nips", "nish", "nisi", "nits", "nixe", "nixy", "noah", "node", 
-  "nods", "noel", "noir", "none", "nook", "noon", "nope", "norm", "nose", "nosh", "nosy", "nota", "note", "nots", "noun", "nous", "nova", "novo", "nows", "nowt", 
-  "nubs", "nude", "nuke", "null", "numb", "nuns", "nurd", "nurl", "nuts", "oafs", "oaks", "oars", "oath", "oats", "obey", "obis", "obit", "oboe", "boes", "odds", 
-  "odes", "odor", "offs", "ogee", "ogle", "ogre", "ohms", "oils", "oily", "oink", "okay", "okie", "okra", "olds", "oldy", "oleo", "oles", "olio", "olla", "omen", 
-  "omit", "once", "ones", "only", "onto", "onus", "onyx", "oohs", "oops", "ooze", "oozy", "opah", "opal", "open", "opes", "opts", "opus", "oral", "orbs", "orca", 
-  "orch", "orcs", "ordo", "ores", "orgy", "orle", "orra", "orts", "oryx", "oslo", "otic", "otto", "ouch", "ours", "oust", "outs", "ouzo", "oval", "oven", "over", 
-  "ovum", "owed", "owes", "owls", "owns", "oxen", "oxes", "oyer", "oyes", "oyez", "pace", "pack", "pacs", "pact", "pads", "page", "paid", "pail", "pain", "pair", 
-  "pale", "pall", "palm", "pals", "pane", "pang", "pans", "pant", "papa", "paps", "para", "pard", "pare", "park", "pars", "part", "paso", "pass", "past", "pate", 
-  "path", "pats", "paul", "pave", "pawl", "pawn", "paws", "pays", "peak", "peal", "pean", "pear", "peas", "peat", "peck", "pecs", "peds", "peek", "peel", "peep", 
-  "peer", "pees", "pegs", "peke", "pelf", "pelt", "pend", "pens", "pent", "peon", "peps", "pere", "perk", "perm", "pert", "peru", "peso", "pest", "pets", "pews", 
-  "pfft", "phew", "phiz", "phos", "phut", "pial", "pian", "pias", "pica", "pick", "pics", "pied", "pier", "pies", "pigs", "pike", "pile", "pill", "pils", "pima", 
-  "pimp", "pina", "pine", "ping", "pink", "pins", "pint", "piny", "pion", "pipe", "pips", "pisa", "pish", "piss", "pita", "pith", "pits", "pity", "pius", "plan", 
-  "plat", "play", "plea", "pleb", "pled", "plew", "plod", "plop", "plot", "plow", "ploy", "plug", "plum", "plus", "pock", "poco", "pods", "poem", "poet", "pogo", 
-  "poke", "poky", "pole", "poll", "polo", "pols", "poly", "pome", "pomp", "pond", "pone", "pong", "pons", "pony", "pood", "poof", "pooh", "pool", "poop", "poor", 
-  "pope", "pops", "pore", "pork", "porn", "port", "pose", "posh", "post", "posy", "pots", "pouf", "pour", "pout", "pows", "poxy", "pram", "prat", "pray", "prep", 
-  "prex", "prey", "prez", "prig", "prim", "proa", "prod", "prof", "prog", "prom", "prop", "pros", "prow", "psst", "pubs", "puce", "puck", "puds", "puff", "pugs", 
-  "puke", "pule", "pull", "pulp", "puma", "pump", "punk", "puns", "punt", "puny", "pupa", "pups", "pure", "purl", "purr", "push", "puss", "puts", "putt", "putz", 
-  "pyre", "qaid", "qats", "quag", "quai", "qual", "quay", "quey", "quid", "quip", "quit", "quiz", "quod", "race", "rack", "racy", "rads", "raff", "raft", "raga", 
-  "rage", "ragi", "rags", "raid", "rail", "rain", "raja", "rake", "raki", "raku", "rale", "rami", "ramp", "rams", "rand", "rang", "rani", "rank", "rant", "rape", 
-  "raps", "rapt", "rare", "rash", "rasp", "rate", "rath", "rato", "rats", "rave", "raws", "rays", "raze", "razz", "read", "real", "ream", "reap", "rear", "rebs", 
-  "reck", "recs", "redo", "reds", "reed", "reef", "reek", "reel", "refs", "reft", "regs", "reif", "rein", "reis", "rely", "rems", "rend", "rent", "repo", "repp", 
-  "reps", "resh", "rest", "rete", "rets", "revs", "rhea", "rial", "rias", "ribs", "rice", "rich", "rick", "ride", "rids", "riel", "rife", "riff", "rift", "rigs", 
-  "rile", "rill", "rime", "rims", "rimy", "rind", "ring", "rink", "riot", "ripe", "rips", "rise", "risk", "rite", "ritz", "rive", "road", "roam", "roan", "roar", 
-  "robe", "robs", "rock", "rocs", "rode", "rods", "roes", "roil", "role", "roll", "romp", "roms", "rood", "roof", "rook", "room", "root", "rope", "ropy", "rose", 
-  "rosy", "rota", "rote", "roti", "rotl", "roto", "rots", "roue", "roup", "rout", "roux", "rove", "rows", "rube", "rubs", "ruby", "ruck", "rudd", "rude", "rued", 
-  "ruer", "rues", "ruff", "rugs", "ruin", "rule", "ruly", "rump", "rums", "rune", "rung", "runs", "runt", "ruse", "rush", "rusk", "rust", "ruth", "ruts", "ryas", 
-  "ryes", "ryke", "rynd", "ryot", "sabe", "sabs", "sack", "sacs", "sade", "sadi", "safe", "saga", "sage", "sago", "sags", "sagy", "said", "sail", "sake", "saki", 
-  "sale", "sall", "salp", "sals", "salt", "same", "samp", "sand", "sane", "sang", "sank", "sans", "saps", "sard", "sari", "sark", "sash", "sass", "sate", "sati", 
-  "saul", "save", "sawn", "saws", "says", "scab", "scad", "scag", "scam", "scan", "scar", "scat", "scil", "scop", "scot", "scow", "scry", "scud", "scum", "scup", 
-  "scut", "seal", "seam", "sear", "seas", "seat", "secs", "sect", "seed", "seek", "seel", "seem", "seen", "seep", "seer", "sees", "sego", "segs", "seif", "self", 
-  "sell", "sels", "semi", "send", "sene", "sent", "sept", "sera", "serb", "sere", "serf", "sers", "seta", "sets", "sett", "sewn", "sews", "sexy", "shad", "shag", 
-  "shah", "sham", "shat", "shaw", "shay", "shea", "shed", "shes", "shew", "shim", "shin", "ship", "shit", "shiv", "shmo", "shod", "shoe", "shog", "shoo", "shop", 
-  "shot", "show", "shul", "shun", "shut", "sial", "sibb", "sibs", "sice", "sick", "sics", "side", "sift", "sigh", "sign", "sike", "sild", "silk", "sill", "silo", 
-  "silt", "sima", "simp", "sims", "sine", "sing", "sinh", "sink", "sins", "sips", "sire", "sirs", "site", "sith", "sits", "size", "sizy", "skag", "skas", "skat", 
-  "skeg", "skep", "skew", "skid", "skim", "skin", "skip", "skis", "skit", "skua", "slab", "slag", "slam", "slap", "slat", "slaw", "slay", "sled", "slew", "slid", 
-  "slim", "slip", "slit", "slob", "sloe", "slog", "slop", "slot", "slow", "slub", "slue", "slug", "slum", "slur", "slut", "smew", "smit", "smog", "smug", "smut", 
-  "snag", "snap", "snip", "snit", "snob", "snog", "snot", "snow", "snub", "snug", "snye", "soak", "soap", "soar", "soba", "sobs", "sock", "soda", "sods", "sofa", 
-  "soft", "soil", "soja", "soke", "sola", "sold", "sole", "soli", "solo", "sols", "soma", "some", "soms", "sone", "song", "sons", "soon", "soot", "soph", "sops", 
-  "sora", "sorb", "sord", "sore", "sori", "sorn", "sort", "soth", "sots", "souk", "soul", "soup", "sour", "sous", "sown", "sows", "soya", "soys", "spae", "spam", 
-  "span", "spar", "spas", "spat", "spay", "spec", "sped", "spew", "spic", "spik", "spin", "spit", "spiv", "spot", "spry", "spud", "spue", "spun", "spur", "sris", 
-  "stab", "stag", "star", "stat", "stay", "stem", "step", "stet", "stew", "stey", "stir", "stoa", "stop", "stow", "stub", "stud", "stum", "stun", "stye", "subs", 
-  "such", "suck", "sudd", "suds", "sued", "suer", "sues", "suet", "suey", "sugs", "suit", "sulk", "sulu", "sumo", "sump", "sums", "sung", "sunk", "suns", "supe", 
-  "sups", "supt", "sure", "surf", "swab", "swag", "swam", "swan", "swap", "swat", "sway", "swig", "swim", "swiz", "swob", "swop", "swot", "swum", "sybo", "syce", 
-  "syke", "syli", "sync", "syne", "syph", "tabs", "tabu", "tace", "tach", "tack", "taco", "tact", "tads", "tael", "tags", "tail", "tain", "take", "tala", "talc", 
-  "tale", "talk", "tall", "tame", "tamp", "tams", "tana", "tang", "tank", "tans", "taos", "tapa", "tape", "taps", "tare", "tarn", "taro", "tarp", "tars", "tart", 
-  "task", "tass", "tate", "tats", "taus", "taut", "taws", "taxa", "taxi", "teak", "teal", "team", "tear", "teas", "teat", "tech", "teds", "teed", "teel", "teem", 
-  "teen", "tees", "teff", "tegg", "tegs", "tele", "tell", "tels", "temp", "tend", "tens", "tent", "tepa", "term", "tern", "test", "teth", "tets", "tews", "text", 
-  "thae", "than", "that", "thaw", "thee", "them", "then", "thew", "they", "thin", "thio", "thir", "this", "thou", "thro", "thru", "thud", "thug", "thus", "tick", 
-  "tics", "tide", "tidy", "tied", "tier", "ties", "tiff", "tike", "tiki", "tile", "till", "tils", "tilt", "time", "timo", "tine", "ting", "tink", "tins", "tint", 
-  "tiny", "tipi", "tips", "tire", "tirl", "tiro", "titi", "tits", "tivy", "toad", "toby", "tods", "tody", "toea", "toed", "toes", "toff", "toft", "tofu", "toga", 
-  "togs", "toil", "toke", "tola", "told", "tole", "toll", "tolu", "tomb", "tome", "toms", "tone", "tong", "tonk", "tons", "tony", "took", "tool", "toom", "toon", 
-  "toot", "tope", "toph", "topi", "tops", "tora", "torc", "tore", "tori", "torn", "toro", "torr", "tors", "tort", "tory", "tosh", "toss", "tost", "tote", "tots", 
-  "tour", "tout", "town", "tows", "towt", "toys", "trad", "tram", "trap", "tray", "tree", "tref", "trek", "tret", "trey", "trig", "trim", "trio", "trip", "trod", 
-  "trog", "trop", "trot", "trow", "troy", "true", "trug", "tsar", "tsks", "tuba", "tube", "tubs", "tuck", "tufa", "tuff", "tuft", "tugs", "tuis", "tule", "tums", 
-  "tuna", "tune", "tung", "tuns", "tups", "turd", "turf", "turk", "turn", "tush", "tusk", "tuts", "tutu", "twae", "twas", "twee", "twig", "twin", "twit", "twos", 
-  "tyke", "tyne", "type", "typo", "typp", "typy", "tyre", "tyro", "tzar", "ughs", "ugly", "ukes", "ulan", "ulna", "ulus", "ulva", "umbo", "umps", "unai", "unau", 
-  "unbe", "unci", "unco", "unde", "undo", "undy", "unit", "unto", "upas", "upby", "updo", "upon", "urbs", "urds", "urea", "urge", "uric", "urns", "ursa", "urus", 
-  "used", "user", "uses", "utas", "utes", "uvea", "vacs", "vagi", "vail", "vain", "vair", "vale", "vamp", "vane", "vang", "vans", "vara", "vars", "vary", "vasa", 
-  "vase", "vast", "vats", "vatu", "vaus", "vaut", "veal", "veda", "veep", "veer", "vees", "veil", "vein", "vela", "veld", "vena", "vend", "vent", "vera", "verb", 
-  "vert", "very", "vest", "veto", "vets", "vext", "vial", "vibe", "vice", "vide", "vied", "vier", "vies", "view", "viff", "viga", "vigs", "vile", "vill", "vims", 
-  "vina", "vine", "vino", "viny", "viol", "virl", "visa", "vise", "vita", "viva", "vivo", "voce", "void", "vole", "volt", "vote", "vows", "vrow", "vugg", "vugh", 
-  "vugs", "wack", "wacs", "wade", "wadi", "wads", "wady", "waes", "waff", "waft", "wage", "wags", "waif", "wail", "wain", "wait", "wake", "wale", "walk", "wall", 
-  "waly", "wame", "wand", "wane", "wang", "wank", "wans", "want", "wany", "waps", "ward", "ware", "wark", "warm", "warn", "warp", "wars", "wart", "wary", "wash", 
-  "wasp", "wast", "wats", "watt", "wauk", "waul", "wave", "wavy", "waxy", "ways", "weak", "weal", "wean", "wear", "webs", "weds", "weed", "week", "weel", "ween", 
-  "weep", "weer", "wees", "weet", "weft", "weir", "weka", "weld", "well", "welt", "wend", "wens", "went", "wept", "were", "wert", "west", "wets", "wham", "whap", 
-  "what", "whee", "when", "whet", "whew", "whey", "whid", "whig", "whim", "whin", "whip", "whir", "whit", "whiz", "whoa", "whom", "whop", "whys", "wich", "wick", 
-  "wide", "wife", "wigs", "wild", "wile", "will", "wilt", "wily", "wimp", "wind", "wine", "wing", "wink", "wino", "wins", "winy", "wipe", "wire", "wiry", "wise", 
-  "wish", "wisp", "wist", "wite", "with", "wits", "wive", "woad", "wock", "woes", "wogs", "woke", "woks", "wold", "wolf", "womb", "wonk", "wont", "wood", "woof", 
-  "wool", "woos", "wops", "word", "wore", "work", "worm", "worn", "wort", "wost", "wots", "wove", "wows", "wrap", "wren", "writ", "wuss", "wych", "wyes", "wyle", 
-  "wynd", "wynn", "wyns", "wyte", "xyst", "yack", "yaff", "yagi", "yags", "yaks", "yald", "yams", "yang", "yank", "yaps", "yard", "yare", "yarn", "yaud", "yaup", 
-  "yawl", "yawn", "yawp", "yaws", "yays", "yeah", "yean", "year", "yeas", "yech", "yegg", "yeld", "yelk", "yell", "yelp", "yens", "yeps", "yerk", "yest", "yeti", 
-  "yett", "yeuk", "yews", "yill", "yins", "yipe", "yips", "yird", "yirr", "ylem", "yobs", "yock", "yodh", "yods", "yoga", "yogh", "yogi", "yoke", "yoks", "yolk", 
-  "yond", "yoni", "yore", "york", "youl", "your", "yous", "yowe", "yowl", "yows", "yuan", "yuca", "yuch", "yuck", "yuks", "yule", "yups", "yurt", "yuzu", "ywis", 
-  "zags", "zany", "zaps", "zarf", "zeal", "zebu", "zeds", "zees", "zein", "zeks", "zeps", "zerk", "zero", "zest", "zeta", "zigs", "zill", "zinc", "zine", "zing", 
-  "zips", "ziti", "zits", "zoea", "zoic", "zoom", "zoon", "zoos", "zori", "zouk", "zyme"
+  // First check if we've already validated this word
+  if (wordValidationCache[normalizedWord] !== undefined) {
+    return wordValidationCache[normalizedWord];
+  }
+  
+  try {
+    // Use the Free Dictionary API to check if the word exists
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${normalizedWord}`);
+    
+    // If status is 200, the word exists; if 404, it doesn't
+    const isValid = response.status === 200;
+    
+    // Cache the result for future checks
+    wordValidationCache[normalizedWord] = isValid;
+    
+    return isValid;
+  } catch (error) {
+    console.error('Error checking word:', error);
+    
+    // In case of API failure, fall back to allowing the word
+    // This prevents blocking players due to connectivity issues
+    return true;
+  }
+}
+
+// A fallback list of common words if the API is ever down
+const commonWords = new Set([
+  "the", "be", "to", "of", "and", "a", "in", "that", "have", "it", "for", "not", "on", "with",
+  "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
+  "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out",
+  "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no",
+  "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them",
+  "see", "other", "than", "then", "now", "look", "only", "come", "its", "over", "think", "also",
+  "back", "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new", "want",
+  "because", "any", "these", "give", "day", "most", "us",
+  // Common game-related words
+  "play", "game", "score", "win", "lose", "draw", "turn", "move", "board", "card", "dice",
+  "piece", "token", "team", "match", "round", "level", "bonus", "points", "rules", "player",
+  // Common 3-letter words
+  "act", "add", "age", "ago", "air", "all", "and", "any", "arm", "art", "ask", "bad", "bag", "bar",
+  "bat", "bed", "bet", "big", "bit", "bob", "box", "boy", "bus", "but", "buy", "can", "car", "cat",
+  "cup", "cut", "dad", "day", "did", "die", "dog", "dry", "due", "eat", "egg", "end", "eye", "far",
+  "fat", "few", "fit", "fix", "fly", "for", "fun", "gas", "get", "god", "got", "gun", "guy", "had",
+  "has", "hat", "her", "him", "his", "hit", "hot", "how", "ice", "its", "job", "key", "kid", "law",
+  "lay", "leg", "let", "lie", "lot", "low", "man", "map", "may", "men", "met", "mom", "mrs", "net",
+  "new", "nor", "not", "now", "odd", "off", "oil", "old", "one", "our", "out", "own", "pay", "per",
+  "put", "ran", "red", "rid", "run", "saw", "say", "sea", "see", "set", "she", "sir", "sit", "six",
+  "son", "sun", "tax", "tea", "ten", "the", "tie", "too", "top", "try", "two", "use", "war", "was",
+  "way", "web", "who", "why", "win", "yes", "yet", "you", "act", "add", "age", "aim", "air", "and",
+  "any", "arm", "art", "ask", "bad", "bag", "ban", "bar", "bat", "bed", "bee", "beg", "bet", "bid",
+  "big", "bit", "bob", "bow", "box", "boy", "bud", "bug", "bun", "bus", "but", "buy", "can", "cap",
+  "car", "cat", "cow", "cry", "cup", "cut", "dad", "dam", "day", "den", "dew", "did", "die", "dig",
+  "dim", "dip", "doe", "dog", "dot", "dry", "due", "dug", "dye", "ear", "eat", "egg", "ego", "elf",
+  "end", "era", "eve", "eye", "fan", "far", "fat", "fee", "few", "fig", "fin", "fit", "fix", "fly",
+  "fog", "for", "fox", "fry", "fun", "fur", "gap", "gas", "gel", "gem", "get", "gin", "god", "got",
+  "gum", "gun", "gut", "guy", "gym", "had", "ham", "has", "hat", "hay", "hem", "hen", "her", "hey",
+  "hid", "him", "hip", "his", "hit", "hog", "hop", "hot", "how", "hub", "hug", "hut", "ice", "icy",
+  "ill", "ink", "inn", "ion", "its", "jam", "jar", "jaw", "jet", "jew", "job", "jog", "joy", "key",
+  "kid", "kin", "kit", "lab", "lad", "lag", "lap", "law", "lay", "leg", "let", "lid", "lie", "lip",
+  "lit", "log", "lot", "low", "mad", "man", "map", "mat", "may", "men", "met", "mid", "mix", "mob",
+  "mom", "mop", "mud", "mug", "nap", "net", "new", "nod", "nor", "not", "now", "nun", "nut", "oak",
+  "odd", "off", "oil", "old", "one", "orb", "ore", "our", "out", "owl", "own", "pad", "pal", "pan",
+  "pea", "pen", "per", "pet", "pie", "pig", "pin", "pit", "pod", "pop", "pot", "pub", "pun", "pup",
+  "put", "rad", "rag", "ram", "ran", "rap", "rat", "raw", "red", "rib", "rid", "rig", "rim", "rip",
+  "rob", "rod", "rot", "row", "rub", "rug", "rum", "run", "sad", "sag", "sal", "sap", "sat", "saw",
+  "say", "sea", "see", "set", "sew", "she", "shy", "sin", "sip", "sir", "sis", "sit", "six", "ski",
+  "sky", "sly", "spy", "son", "sow", "spa", "stir", "sub", "sue", "sum", "sun", "tab", "tag", "tan",
+  "tap", "tar", "tax", "tea", "ten", "the", "tie", "til", "tin", "tip", "toe", "ton", "too", "top",
+  "toy", "try", "tub", "tug", "two", "use", "van", "vat", "vet", "via", "vie", "vow", "wag", "war",
+  "was", "wax", "way", "web", "wed", "wet", "who", "why", "wig", "win", "wit", "woe", "won", "wow",
+  "yes", "yet", "you", "zip", "zoo" 
 ]);
 
-// Check if a word is valid using our expanded English dictionary
+/**
+ * Synchronous function to check if a word is valid (for use when API is not available)
+ * Uses the fallback dictionary if the API check is in progress
+ * @param word The word to validate
+ * @returns boolean True if the word is valid or we're not sure (giving benefit of doubt)
+ */
 export function isValidWord(word: string): boolean {
   if (!word || word.length < 3) return false;
   
-  // Convert to lowercase for case-insensitive check
-  return englishWords.has(word.toLowerCase());
+  const normalizedWord = word.toLowerCase();
+  
+  // If we have a cached result, use it
+  if (wordValidationCache[normalizedWord] !== undefined) {
+    return wordValidationCache[normalizedWord];
+  }
+  
+  // If we haven't checked this word yet, give the benefit of doubt
+  // and let the async validation complete later
+  // Check against our minimal fallback dictionary
+  return commonWords.has(normalizedWord);
 }

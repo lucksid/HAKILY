@@ -229,7 +229,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   };
   
   // Submit current word
-  const submitWord = () => {
+  const submitWord = async () => {
     // Only allow submission if time hasn't elapsed and player hasn't submitted yet
     if (roundEnded || hasSubmitted) return;
     
@@ -247,41 +247,74 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
       return;
     }
     
-    // Check if word is valid
-    const valid = isValidWord(word.toLowerCase());
+    // Show "checking" feedback
+    setFeedback({
+      message: `Checking "${word}"...`,
+      type: "info"
+    });
     
-    // Calculate score (only if word is valid)
-    let score = 0;
+    // Set loading state
+    setHasSubmitted(true); // Prevent multiple submissions
     
-    if (valid) {
-      // Add points for each letter (vowels=1, consonants=2)
-      for (const letter of word) {
-        if (/[AEIOU]/i.test(letter)) {
-          score += 1; // Vowels are worth 1 point
-        } else {
-          score += 2; // Consonants are worth 2 points
-        }
+    try {
+      // First try checking our cache via the synchronous method
+      let valid = isValidWord(word.toLowerCase());
+      
+      // If not in our cache/fallback list, check with the API
+      if (!valid) {
+        valid = await checkWordWithAPI(word);
       }
       
-      // Add bonus for longer words
-      if (word.length > 5) score += 3;
-      else if (word.length > 3) score += 1;
-    }
-    
-    // Always add the word to submitted words with valid flag
-    setSubmittedWords([...submittedWords, { word, score, isValid: valid }]);
-    setSelectedLetters([]);
-    setHasSubmitted(true); // Mark that player has submitted a word for this round
-    
-    if (valid) {
+      // Calculate score (only if word is valid)
+      let score = 0;
+      
+      if (valid) {
+        // Add points for each letter (vowels=1, consonants=2)
+        for (const letter of word) {
+          if (/[AEIOU]/i.test(letter)) {
+            score += 1; // Vowels are worth 1 point
+          } else {
+            score += 2; // Consonants are worth 2 points
+          }
+        }
+        
+        // Add bonus for longer words
+        if (word.length > 5) score += 3;
+        else if (word.length > 3) score += 1;
+      }
+      
+      // Always add the word to submitted words with valid flag
+      setSubmittedWords([...submittedWords, { word, score, isValid: valid }]);
+      setSelectedLetters([]);
+      
+      // Show appropriate feedback based on validation result
+      if (valid) {
+        setFeedback({
+          message: `"${word}" accepted! +${score} points`,
+          type: "success"
+        });
+      } else {
+        setFeedback({
+          message: `"${word}" is not a valid English word. No points earned.`,
+          type: "error"
+        });
+      }
+    } catch (error) {
+      console.error("Error validating word:", error);
+      
+      // If there's an error with the API, give the user the benefit of the doubt
+      // and accept the word with the basic calculation
+      const score = calculateWordScore(word);
+      
+      setSubmittedWords([...submittedWords, { 
+        word, 
+        score, 
+        isValid: true // Accept the word if the API fails
+      }]);
+      
       setFeedback({
         message: `"${word}" accepted! +${score} points`,
         type: "success"
-      });
-    } else {
-      setFeedback({
-        message: `"${word}" is not a valid English word. No points earned.`,
-        type: "error"
       });
     }
     
