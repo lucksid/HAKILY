@@ -982,6 +982,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>Longer words earn bonus points</li>
                 <li>You have 30 seconds for each round</li>
                 <li>First to reach {targetScore} points wins!</li>
+                {playMode === 'multi' && (
+                  <li className="text-blue-800 font-medium">Next round auto-advances after 5 seconds!</li>
+                )}
               </ul>
             </div>
           </div>
@@ -2577,6 +2580,21 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
                   ))}
                 </div>
                 
+                {/* Game status */}
+                {hasSubmitted && roundEnded && (
+                  <div className="mb-4 p-2 bg-green-100 text-green-800 rounded-md text-center">
+                    {playMode === 'multi' ? 
+                      "Round complete! Next question will appear automatically →" : 
+                      "Round complete! Click \"Next Question\" to continue →"
+                    }
+                  </div>
+                )}
+                {hasSubmitted && !roundEnded && (
+                  <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 rounded-md text-center">
+                    Answer submitted! Waiting for next round...
+                  </div>
+                )}
+                
                 {/* Action buttons */}
                 <div className="flex justify-center mt-6">
                   {roundEnded ? (
@@ -2627,6 +2645,9 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>First to reach {targetScore} points wins!</li>
                 <li>You have {difficulty === 'easy' ? '30' : difficulty === 'medium' ? '25' : '20'} seconds to answer each question</li>
                 <li>You can only submit one answer per question</li>
+                {playMode === 'multi' && (
+                  <li className="text-blue-800 font-medium">Next question auto-advances after 5 seconds!</li>
+                )}
               </ul>
             </div>
           </div>
