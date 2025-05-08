@@ -868,6 +868,14 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
               )}
               
               {/* Game status */}
+              {hasSubmitted && roundEnded && (
+                <div className="mb-2 p-2 bg-green-100 text-green-800 rounded-md text-center">
+                  {playMode === 'multi' ? 
+                    "Round complete! Next round will appear automatically →" : 
+                    "Round complete! Click \"Start New Round\" to continue →"
+                  }
+                </div>
+              )}
               {hasSubmitted && !roundEnded && (
                 <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded-md text-center">
                   Word submitted! Waiting for next round...
@@ -917,7 +925,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
               {/* Action buttons */}
               <div className="flex justify-center space-x-4">
                 {roundEnded ? (
-                  playMode === 'multi' && autoAdvanceCountdown ? (
+                  autoAdvanceCountdown ? (
                     <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center space-x-2">
                       <span>Next round in</span>
                       <span className="bg-gray-700 text-white px-3 py-1 rounded-full font-bold animate-pulse">
@@ -925,13 +933,17 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                       </span>
                       <span>seconds</span>
                     </div>
-                  ) : (
+                  ) : playMode === 'single' ? (
                     <button
                       className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                       onClick={startNewRound}
                     >
                       Start New Round
                     </button>
+                  ) : (
+                    <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center justify-center">
+                      Waiting for next round...
+                    </div>
                   )
                 ) : (
                   <>
@@ -1766,7 +1778,10 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
               {/* Game status */}
               {hasSubmitted && roundEnded && (
                 <div className="mb-2 p-2 bg-green-100 text-green-800 rounded-md text-center">
-                  Round complete! Click "Next Problem" to continue →
+                  {playMode === 'multi' ? 
+                    "Round complete! Next problem will appear automatically →" : 
+                    "Round complete! Click \"Next Problem\" to continue →"
+                  }
                 </div>
               )}
               {hasSubmitted && !roundEnded && (
@@ -1804,7 +1819,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 {/* Action buttons */}
                 <div className="flex justify-center space-x-4">
                   {roundEnded ? (
-                    playMode === 'multi' && autoAdvanceCountdown ? (
+                    autoAdvanceCountdown ? (
                       <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center space-x-2">
                         <span>Next problem in</span>
                         <span className="bg-gray-700 text-white px-3 py-1 rounded-full font-bold animate-pulse">
@@ -1812,13 +1827,17 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                         </span>
                         <span>seconds</span>
                       </div>
-                    ) : (
+                    ) : playMode === 'single' ? (
                       <button
                         className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 text-lg font-medium animate-pulse"
                         onClick={startNewRound}
                       >
                         Next Problem →
                       </button>
+                    ) : (
+                      <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center justify-center">
+                        Waiting for next problem...
+                      </div>
                     )
                   ) : (
                     <button
