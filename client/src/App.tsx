@@ -1210,9 +1210,15 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
       });
     }
     
-    // Set submitted state
+    // Set submitted state and end the round immediately
     setHasSubmitted(true);
+    setRoundEnded(true); // This will trigger the "Next Problem" button to appear
+    
+    // Clear feedback after a few seconds
     setTimeout(() => setFeedback(null), 3000);
+    
+    // Log that the round has ended for debugging
+    console.log("Round ended after answer submission");
   };
   
   // Start a new round
@@ -1574,6 +1580,11 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
               )}
               
               {/* Game status */}
+              {hasSubmitted && roundEnded && (
+                <div className="mb-2 p-2 bg-green-100 text-green-800 rounded-md text-center">
+                  Round complete! Click "Next Problem" to continue →
+                </div>
+              )}
               {hasSubmitted && !roundEnded && (
                 <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded-md text-center">
                   Answer submitted! Waiting for next round...
@@ -1610,10 +1621,10 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 <div className="flex justify-center space-x-4">
                   {roundEnded ? (
                     <button
-                      className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                      className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 text-lg font-medium animate-pulse"
                       onClick={startNewRound}
                     >
-                      Next Problem
+                      Next Problem →
                     </button>
                   ) : (
                     <button
