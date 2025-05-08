@@ -1145,9 +1145,26 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
   
   // Generate a new math problem
   const generateNewProblem = () => {
-    const problem = generateMathProblem();
-    setCurrentProblem(problem);
-    return problem;
+    try {
+      // Create a new problem based on the selected difficulty
+      const problem = generateMathProblem();
+      console.log("Generated new problem:", problem);
+      
+      // Update the state with the new problem
+      setCurrentProblem(problem);
+      
+      return problem;
+    } catch (error) {
+      console.error("Error generating math problem:", error);
+      
+      // Fallback problem in case of error
+      const fallbackProblem = {
+        problem: "5 + 5",
+        answer: 10
+      };
+      setCurrentProblem(fallbackProblem);
+      return fallbackProblem;
+    }
   };
   
   // Submit current answer
@@ -1219,6 +1236,14 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     }, 100);
   };
   
+  // Effect to make sure problem is generated if it's missing
+  useEffect(() => {
+    if (gamePhase === "playing" && !currentProblem) {
+      console.log("No problem found, generating a new one");
+      generateNewProblem();
+    }
+  }, [gamePhase, currentProblem]);
+
   // Simulate countdown timer
   useEffect(() => {
     if (gamePhase === "playing" && timeLeft > 0 && !hasSubmitted) {
@@ -1558,7 +1583,15 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
               {/* Math problem display */}
               <div className="my-8 text-center">
                 <div className="text-3xl font-bold mb-4">
-                  {currentProblem ? currentProblem.problem : "Loading problem..."}
+                  {currentProblem ? (
+                    <>{currentProblem.problem} = ?</>
+                  ) : (
+                    "Loading problem..."
+                  )}
+                </div>
+                {/* Debug info - will be removed in production */}
+                <div className="text-xs text-gray-400 mb-2">
+                  Round: {currentRound} | Problem ID: {currentProblem ? Date.now() % 1000 : 'none'} 
                 </div>
                 
                 {/* Answer input */}
