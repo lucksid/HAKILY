@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { loginUserSchema } from "@shared/schema";
+import { getGameHistory, getGameHistoryByType, getUserGameHistory } from "./controllers/historyController";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
@@ -135,6 +136,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Could not fetch game details" });
     }
   });
+  
+  // Game history routes
+  app.get('/api/history', getGameHistory);
+  app.get('/api/history/user/:userId', getUserGameHistory);
+  app.get('/api/history/type/:type', getGameHistoryByType);
   
   return httpServer;
 }

@@ -118,6 +118,9 @@ function ChatBox() {
   );
 }
 
+// Import GameHistory component
+import GameHistory from './components/GameHistory';
+
 // Game Lobby Component
 function GameLobby({ 
   username, 
@@ -128,6 +131,9 @@ function GameLobby({
   onLogout: () => void,
   onStartGame: (gameType: string) => void 
 }) {
+  // State for active tab
+  const [activeTab, setActiveTab] = useState<'games' | 'history'>('games');
+
   return (
     <div className="max-w-6xl w-full mx-auto">
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
@@ -146,57 +152,91 @@ function GameLobby({
         </div>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold mb-4">Game Lobby</h2>
-            <p className="text-gray-600 mb-6">
-              Choose a game to play from the options below:
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div 
-                className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
-                onClick={() => onStartGame("word")}
-              >
-                <div className="text-4xl mb-2">📝</div>
-                <h3 className="font-bold">Word Challenge</h3>
-                <p className="text-sm text-gray-500">Create words from 7 letters</p>
-              </div>
-              
-              <div 
-                className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
-                onClick={() => alert("Math game coming soon!")}
-              >
-                <div className="text-4xl mb-2">🔢</div>
-                <h3 className="font-bold">Math Wizards</h3>
-                <p className="text-sm text-gray-500">Solve math problems</p>
-              </div>
-              
-              <div 
-                className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
-                onClick={() => alert("Quiz game coming soon!")}
-              >
-                <div className="text-4xl mb-2">❓</div>
-                <h3 className="font-bold">Quiz Masters</h3>
-                <p className="text-sm text-gray-500">Test your knowledge</p>
-              </div>
-            </div>
-            
-            <div className="mt-8 bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-bold text-blue-800 mb-2">How to Play</h3>
-              <p className="text-sm text-blue-700">
-                Click on a game type to create a new game room or join an existing one.
-                Invite friends to play with you by sharing the game link. Have fun!
+      {/* Tab Navigation */}
+      <div className="flex mb-6 border-b">
+        <button
+          className={`px-6 py-2 font-medium ${
+            activeTab === 'games' 
+              ? 'text-blue-600 border-b-2 border-blue-600' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('games')}
+        >
+          Play Games
+        </button>
+        <button
+          className={`px-6 py-2 font-medium ${
+            activeTab === 'history' 
+              ? 'text-blue-600 border-b-2 border-blue-600' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('history')}
+        >
+          Game History
+        </button>
+      </div>
+      
+      {/* Games Tab */}
+      {activeTab === 'games' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-bold mb-4">Game Lobby</h2>
+              <p className="text-gray-600 mb-6">
+                Choose a game to play from the options below:
               </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div 
+                  className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
+                  onClick={() => onStartGame("word")}
+                >
+                  <div className="text-4xl mb-2">📝</div>
+                  <h3 className="font-bold">Word Challenge</h3>
+                  <p className="text-sm text-gray-500">Create words from 7 letters</p>
+                </div>
+                
+                <div 
+                  className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
+                  onClick={() => alert("Math game coming soon!")}
+                >
+                  <div className="text-4xl mb-2">🔢</div>
+                  <h3 className="font-bold">Math Wizards</h3>
+                  <p className="text-sm text-gray-500">Solve math problems</p>
+                </div>
+                
+                <div 
+                  className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
+                  onClick={() => alert("Quiz game coming soon!")}
+                >
+                  <div className="text-4xl mb-2">❓</div>
+                  <h3 className="font-bold">Quiz Masters</h3>
+                  <p className="text-sm text-gray-500">Test your knowledge</p>
+                </div>
+              </div>
+              
+              <div className="mt-8 bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-bold text-blue-800 mb-2">How to Play</h3>
+                <p className="text-sm text-blue-700">
+                  Click on a game type to create a new game room or join an existing one.
+                  Invite friends to play with you by sharing the game link. Have fun!
+                </p>
+              </div>
             </div>
           </div>
+          
+          <div className="md:col-span-1">
+            <ChatBox />
+          </div>
         </div>
-        
-        <div className="md:col-span-1">
-          <ChatBox />
+      )}
+      
+      {/* History Tab */}
+      {activeTab === 'history' && (
+        <div className="grid grid-cols-1 gap-6">
+          <GameHistory limit={10} />
         </div>
-      </div>
+      )}
     </div>
   );
 }
