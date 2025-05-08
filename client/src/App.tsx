@@ -178,9 +178,10 @@ function GameLobby({
 }) {
   // State for active tab
   const [activeTab, setActiveTab] = useState<'games' | 'history'>('games');
+  const lobbyContainerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="max-w-6xl w-full mx-auto">
+    <div className="max-w-6xl w-full mx-auto" ref={lobbyContainerRef}>
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">EduPlay</h1>
         <div className="flex items-center space-x-4">
@@ -862,10 +863,22 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [currentGame, setCurrentGame] = useState<string | null>(null);
+  const appContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Helper function to scroll to top of the app container
+  const scrollToTop = () => {
+    if (appContainerRef.current) {
+      appContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleLogin = (name: string) => {
     setUsername(name);
     setIsLoggedIn(true);
+    // Scroll to top when signing in
+    setTimeout(scrollToTop, 100);
   };
 
   const handleLogout = () => {
@@ -876,10 +889,14 @@ function App() {
   
   const startGame = (gameType: string) => {
     setCurrentGame(gameType);
+    // Scroll to top when entering a game
+    setTimeout(scrollToTop, 100);
   };
   
   const backToLobby = () => {
     setCurrentGame(null);
+    // Scroll to top when returning to lobby
+    setTimeout(scrollToTop, 100);
   };
 
   // Main content based on login state and current game
@@ -899,7 +916,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+    <div 
+      ref={appContainerRef}
+      className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center"
+    >
       {content}
     </div>
   );
