@@ -253,6 +253,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [totalScore, setTotalScore] = useState(0);
+  const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
   
   // Handle letter selection
   const selectLetter = (letter: string, index: number) => {
@@ -424,7 +425,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
         <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
           <div className="flex items-center">
             <button
-              onClick={onBack}
+              onClick={onBack}  
               className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
             >
               ← Back
@@ -491,7 +492,14 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
         <div className="flex items-center">
           <button
-            onClick={onBack}
+            onClick={() => {
+              // Show warning dialog if game is in progress and target not reached
+              if (gameMode === "playing" && totalScore < targetScore) {
+                setShowExitWarning(true);
+              } else {
+                onBack();
+              }
+            }}
             className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
           >
             ← Back
@@ -514,6 +522,36 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           </div>
         </div>
       </header>
+      
+      {/* Exit Warning Dialog */}
+      {showExitWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-red-600 mb-4">Warning: Game in Progress</h3>
+            <p className="mb-6 text-gray-700">
+              You're about to leave the game before reaching the target score of {targetScore} points. 
+              Your current progress will be lost and you won't be able to return to this game.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowExitWarning(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Continue Playing
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitWarning(false);
+                  onBack();
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Leave Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
