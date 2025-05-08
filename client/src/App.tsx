@@ -494,40 +494,17 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     if (playMode === 'single') {
       setRoundEnded(true);
     }
-    // In multiplayer mode, start auto-advance after submission
+    // In multiplayer mode, mark as submitted but don't immediately end the round
+    // This allows other players to still submit their words until time runs out
     else if (playMode === 'multi') {
-      setRoundEnded(true); // End the round after submission
+      // Only show feedback about submitting
+      setFeedback({
+        message: `Word submitted! Waiting for round to complete...`,
+        type: "info"
+      });
       
-      // Show feedback for auto-advance
-      setTimeout(() => {
-        setFeedback({
-          message: `Next round in 5 seconds...`,
-          type: "info"
-        });
-      }, 3500);
-      
-      // Start countdown from 5
-      setTimeout(() => {
-        setAutoAdvanceCountdown(5);
-        
-        // Create a 5-second countdown
-        const countdownInterval = setInterval(() => {
-          setAutoAdvanceCountdown(prevCount => {
-            if (prevCount === null || prevCount <= 1) {
-              clearInterval(countdownInterval);
-              return null;
-            }
-            return prevCount - 1;
-          });
-        }, 1000);
-        
-        // Advance to next round after 5 seconds
-        setTimeout(() => {
-          clearInterval(countdownInterval);
-          setAutoAdvanceCountdown(null);
-          startNewRound();
-        }, 5000);
-      }, 3500);
+      // Clear feedback after a few seconds
+      setTimeout(() => setFeedback(null), 3000);
     }
   };
   
