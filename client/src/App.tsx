@@ -203,12 +203,13 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const letters = ["A", "E", "I", "R", "S", "T", "N"];
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
   const [submittedWords, setSubmittedWords] = useState<{word: string, score: number}[]>([]);
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(30); // Increased to 30 seconds
+  const [roundEnded, setRoundEnded] = useState(false);
   
   // Handle letter selection
   const selectLetter = (letter: string, index: number) => {
-    // Only add if not already selected
-    if (!selectedLetters.includes(letter + index)) {
+    // Only add if not already selected and round not ended
+    if (!selectedLetters.includes(letter + index) && !roundEnded) {
       setSelectedLetters([...selectedLetters, letter + index]);
     }
   };
@@ -220,6 +221,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   
   // Submit current word
   const submitWord = () => {
+    // Only allow submission if time hasn't elapsed
+    if (roundEnded) return;
+    
     const word = selectedLetters.map(l => l.charAt(0)).join("");
     if (word.length >= 3) {
       // Calculate a simple score (1 point per letter, bonus for longer words)
@@ -232,11 +236,21 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     }
   };
   
+  // Reset the game for a new round
+  const startNewRound = () => {
+    setTimeLeft(30);
+    setRoundEnded(false);
+    setSelectedLetters([]);
+  };
+  
   // Simulate countdown timer
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
+    } else {
+      // Time's up!
+      setRoundEnded(true);
     }
   }, [timeLeft]);
   
@@ -253,7 +267,13 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           <h1 className="text-2xl font-bold text-blue-600">Word Challenge</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            timeLeft > 10 
+              ? "bg-blue-100 text-blue-800" 
+              : timeLeft > 5 
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-red-100 text-red-800"
+          }`}>
             Time: {timeLeft}s
           </div>
           <div className="text-sm">
@@ -267,9 +287,15 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
         <div className="md:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="mb-8">
-              <h2 className="text-center text-xl font-bold mb-2">Create a word using these letters</h2>
+              <h2 className="text-center text-xl font-bold mb-2">
+                {roundEnded 
+                  ? "Time's up! Round complete" 
+                  : "Create a word using these letters"}
+              </h2>
               <p className="text-center text-gray-600 mb-4">
-                Select letters to form a word, then click Submit
+                {roundEnded 
+                  ? `You made ${submittedWords.length} word${submittedWords.length !== 1 ? 's' : ''}!` 
+                  : "Select letters to form a word, then click Submit"}
               </p>
               
               {/* Selected word display */}
@@ -282,6 +308,8 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                       </div>
                     ))}
                   </div>
+                ) : roundEnded ? (
+                  <span className="text-gray-600 font-medium">Round complete</span>
                 ) : (
                   <span className="text-gray-400">Your word will appear here</span>
                 )}
@@ -293,12 +321,12 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                   <button
                     key={index}
                     className={`w-14 h-14 flex items-center justify-center rounded-lg text-2xl font-bold border-2 
-                      ${selectedLetters.includes(letter + index) 
+                      ${selectedLetters.includes(letter + index) || roundEnded
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                         : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50 hover:border-blue-400'
                       }`}
                     onClick={() => selectLetter(letter, index)}
-                    disabled={selectedLetters.includes(letter + index)}
+                    disabled={selectedLetters.includes(letter + index) || roundEnded}
                   >
                     {letter}
                     <span className="absolute bottom-1 right-1 text-xs">
@@ -310,18 +338,35 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
               
               {/* Action buttons */}
               <div className="flex justify-center space-x-4">
-                <button
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                  onClick={clearSelection}
-                >
-                  Clear
-                </button>
-                <button
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  onClick={submitWord}
-                >
-                  Submit Word
-                </button>
+                {roundEnded ? (
+                  <button
+                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    onClick={startNewRound}
+                  >
+                    Start New Round
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                      onClick={clearSelection}
+                      disabled={selectedLetters.length === 0}
+                    >
+                      Clear
+                    </button>
+                    <button
+                      className={`px-6 py-2 rounded-md ${
+                        selectedLetters.length >= 3
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-blue-200 text-blue-500 cursor-not-allowed"
+                      }`}
+                      onClick={submitWord}
+                      disabled={selectedLetters.length < 3}
+                    >
+                      Submit Word
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             
@@ -333,7 +378,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>Vowels are worth 1 point, consonants are worth 2 points</li>
                 <li>Words must be at least 3 letters long</li>
                 <li>Longer words earn bonus points</li>
-                <li>You have 15 seconds for each round</li>
+                <li>You have 30 seconds for each round</li>
               </ul>
             </div>
           </div>
