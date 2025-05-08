@@ -1204,7 +1204,8 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     setRoundEnded(false);
     setUserAnswer("");
     setHasSubmitted(false);
-    generateNewProblem();
+    const problem = generateNewProblem();
+    console.log("New round problem:", problem);
     setCurrentRound(prev => prev + 1);
     setFeedback({
       message: "New problem! You have 30 seconds to solve it.",
@@ -1261,7 +1262,8 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     setSubmittedAnswers([]);
     setTotalScore(0);
     setCurrentRound(1);
-    generateNewProblem();
+    const problem = generateNewProblem();
+    console.log("Initial problem generated:", problem);
     setTimeLeft(30);
     setRoundEnded(false);
     setHasSubmitted(false);
