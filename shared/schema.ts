@@ -88,3 +88,18 @@ export type QuizGameData = {
   correctOption: number;
   submissions: { playerId: number; selectedOption: number; isCorrect: boolean }[];
 };
+
+// Game history data type for retrieving completed games with player information
+export type GameHistoryItem = {
+  id: number;
+  gameType: GameType;
+  createdAt: Date;
+  completedAt?: Date;
+  winnerId: number | null;
+  winnerUsername?: string;
+  participants: {
+    userId: number;
+    username: string;
+    score: number;
+  }[];
+};

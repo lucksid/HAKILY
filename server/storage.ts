@@ -1,7 +1,7 @@
-import { users, type User, type InsertUser, type Game, type GameParticipant, type Message } from "@shared/schema";
+import { users, type User, type InsertUser, type Game, type GameParticipant, type Message, type GameHistoryItem } from "@shared/schema";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, isNull } from "drizzle-orm";
 import { games, gameParticipants, messages } from "@shared/schema";
 
 // Interface for storage operations
@@ -19,6 +19,11 @@ export interface IStorage {
   getActiveGames(): Promise<Game[]>;
   updateGameWinner(gameId: number, winnerId: number): Promise<Game>;
   
+  // Game history operations
+  getGameHistory(limit?: number): Promise<GameHistoryItem[]>; // Get all game history
+  getUserGameHistory(userId: number, limit?: number): Promise<GameHistoryItem[]>; // Get user's game history
+  getGameHistoryByType(gameType: string, limit?: number): Promise<GameHistoryItem[]>; // Get game history by type
+
   // Game participants
   addPlayerToGame(gameId: number, userId: number): Promise<GameParticipant>;
   updatePlayerScore(gameId: number, userId: number, score: number): Promise<GameParticipant>;
@@ -68,16 +73,13 @@ export class PostgresStorage implements IStorage {
   }
   
   async getLeaderboard(limit: number = 10): Promise<User[]> {
-    return this.db
-      .select({
-        id: users.id,
-        username: users.username,
-        points: users.points,
-        createdAt: users.createdAt
-      })
+    const result = await this.db
+      .select()
       .from(users)
       .orderBy(desc(users.points))
       .limit(limit);
+    
+    return result;
   }
   
   // Game operations
@@ -115,6 +117,93 @@ export class PostgresStorage implements IStorage {
       .where(eq(games.id, gameId))
       .returning();
     return result[0];
+  }
+  
+  // Game history operations
+  async getGameHistory(limit: number = 10): Promise<GameHistoryItem[]> {
+    // Get completed games (games with a winner)
+    const completedGames = await this.db
+      .select({
+        id: games.id,
+        gameType: games.gameType,
+        createdAt: games.createdAt,
+        winnerId: games.winnerId
+      })
+      .from(games)
+      .where(sql`${games.winnerId} IS NOT NULL`) // Only completed games
+      .orderBy(desc(games.createdAt))
+      .limit(limit);
+    
+    // Build full game history with player information
+    const gameHistory: GameHistoryItem[] = [];
+    
+    for (const game of completedGames) {
+      // Get all participants for this game
+      const participants = await this.db
+        .select({
+          userId: gameParticipants.userId,
+          score: gameParticipants.score
+        })
+        .from(gameParticipants)
+        .where(eq(gameParticipants.gameId, game.id));
+      
+      // Get usernames for all participants
+      const participantsWithUsernames = await Promise.all(
+        participants.map(async (participant) => {
+          const user = await this.getUser(participant.userId);
+          return {
+            userId: participant.userId,
+            username: user?.username || 'Unknown Player',
+            score: participant.score
+          };
+        })
+      );
+      
+      // Get winner username if there's a winner
+      let winnerUsername: string | undefined;
+      if (game.winnerId) {
+        const winner = await this.getUser(game.winnerId);
+        winnerUsername = winner?.username;
+      }
+      
+      gameHistory.push({
+        id: game.id,
+        gameType: game.gameType as any, // Type casting since DB stores as string
+        createdAt: game.createdAt,
+        winnerId: game.winnerId,
+        winnerUsername,
+        participants: participantsWithUsernames
+      });
+    }
+    
+    return gameHistory;
+  }
+  
+  async getUserGameHistory(userId: number, limit: number = 10): Promise<GameHistoryItem[]> {
+    // Find games where this user participated
+    const userParticipations = await this.db
+      .select({
+        gameId: gameParticipants.gameId
+      })
+      .from(gameParticipants)
+      .where(eq(gameParticipants.userId, userId))
+      .limit(limit);
+    
+    // Get game details for these games
+    const gameIds = userParticipations.map(p => p.gameId);
+    if (gameIds.length === 0) return [];
+    
+    // Use game history helper with specific game IDs
+    const allGameHistory = await this.getGameHistory(limit);
+    return allGameHistory.filter(game => gameIds.includes(game.id));
+  }
+  
+  async getGameHistoryByType(gameType: string, limit: number = 10): Promise<GameHistoryItem[]> {
+    // Get all game history and filter by type
+    const allGameHistory = await this.getGameHistory(limit * 2); // Get more items to account for filtering
+    return allGameHistory
+      .filter(game => game.gameType === gameType)
+      .slice(0, limit);
   }
   
   // Game participants
@@ -283,6 +372,72 @@ export class MemStorage implements IStorage {
     const updatedGame = { ...game, winnerId };
     this.games.set(gameId, updatedGame);
     return updatedGame;
+  }
+  
+  // Game history operations
+  async getGameHistory(limit: number = 10): Promise<GameHistoryItem[]> {
+    // Get completed games (with a winner)
+    const completedGames = Array.from(this.games.values())
+      .filter(game => game.winnerId !== null)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+    
+    // Build full game history with player information
+    const gameHistory: GameHistoryItem[] = [];
+    
+    for (const game of completedGames) {
+      // Get all participants for this game
+      const gameParticipants = this.participants.get(game.id) || [];
+      
+      // Get usernames for all participants
+      const participantsWithUsernames = await Promise.all(
+        gameParticipants.map(async (participant) => {
+          const user = await this.getUser(participant.userId);
+          return {
+            userId: participant.userId,
+            username: user?.username || 'Unknown Player',
+            score: participant.score
+          };
+        })
+      );
+      
+      // Get winner username if there's a winner
+      let winnerUsername: string | undefined;
+      if (game.winnerId) {
+        const winner = await this.getUser(game.winnerId);
+        winnerUsername = winner?.username;
+      }
+      
+      gameHistory.push({
+        id: game.id,
+        gameType: game.gameType as any, // Type casting since we store as string
+        createdAt: game.createdAt,
+        winnerId: game.winnerId,
+        winnerUsername,
+        participants: participantsWithUsernames
+      });
+    }
+    
+    return gameHistory;
+  }
+  
+  async getUserGameHistory(userId: number, limit: number = 10): Promise<GameHistoryItem[]> {
+    // Get all game history
+    const allGameHistory = await this.getGameHistory(limit * 2); // Get more to filter
+    
+    // Filter for games where this user participated
+    return allGameHistory
+      .filter(game => game.participants.some(p => p.userId === userId))
+      .slice(0, limit);
+  }
+  
+  async getGameHistoryByType(gameType: string, limit: number = 10): Promise<GameHistoryItem[]> {
+    // Get all game history and filter by type
+    const allGameHistory = await this.getGameHistory(limit * 2); // Get more to filter
+    
+    return allGameHistory
+      .filter(game => game.gameType === gameType)
+      .slice(0, limit);
   }
   
   // Game participants
