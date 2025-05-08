@@ -1223,6 +1223,10 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
   
   // Start a new round
   const startNewRound = () => {
+    // Force window to scroll to top immediately
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    
+    // Update game state
     setTimeLeft(30);
     setRoundEnded(false);
     setUserAnswer("");
@@ -1236,7 +1240,7 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     });
     setTimeout(() => setFeedback(null), 3000);
     
-    // Force window to scroll to top
+    // Force window to scroll to top again after UI has updated
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
@@ -1298,6 +1302,14 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     setTimeLeft(30);
     setRoundEnded(false);
     setHasSubmitted(false);
+    
+    // Scroll to top of the page immediately
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Also schedule another scroll after a brief delay to ensure UI has updated
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
   
   // Game Setup Screen
