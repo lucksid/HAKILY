@@ -1,71 +1,164 @@
-// Dictionary for validating words in the word game
-// This is a simplified dictionary with common English words
-// A real app would use a more comprehensive dictionary or API
-
-const dictionary: Set<string> = new Set([
-  // 2-letter words
-  "at", "am", "an", "as", "be", "by", "do", "go", "he", "hi", "if", "in", "is", "it", "me", "my", "no", "of", "on", "or", "so", "to", "up", "us", "we",
+// A list of common English words for validation
+// This is a small subset for demo purposes
+export const commonWords: string[] = [
+  "act", "add", "age", "ago", "air", "all", "and", "any", "are", "art", "ask", "ate", "bad", "bag", "ban",
+  "bar", "bat", "bed", "bee", "bet", "bid", "big", "bit", "box", "boy", "bug", "bus", "but", "buy", "cab",
+  "can", "cap", "car", "cat", "cow", "cry", "cup", "cut", "dad", "day", "did", "die", "dig", "dog", "dot",
+  "due", "ear", "eat", "egg", "end", "eye", "fan", "far", "fat", "few", "fit", "fix", "fly", "for", "fox", 
+  "fun", "gap", "gas", "get", "got", "gun", "guy", "had", "ham", "has", "hat", "her", "hid", "him", "his", 
+  "hit", "hot", "how", "hub", "hug", "hut", "ice", "idea", "into", "iron", "its", "jar", "jet", "job", "jog", 
+  "joy", "key", "kid", "kit", "lab", "lag", "lap", "law", "lay", "led", "leg", "let", "lid", "lie", "lip", 
+  "lit", "log", "lot", "low", "mad", "man", "map", "mat", "may", "men", "met", "mix", "mob", "mom", "mop", 
+  "mud", "mug", "nap", "net", "new", "nil", "nod", "nor", "not", "now", "nut", "odd", "off", "oil", "old", 
+  "one", "our", "out", "owe", "own", "pad", "pan", "pay", "pen", "per", "pet", "pie", "pig", "pin", "pit", 
+  "pop", "pot", "put", "rad", "rag", "ran", "rap", "rat", "raw", "red", "rid", "rig", "rim", "rip", "rob", 
+  "rod", "rot", "row", "rub", "rug", "run", "sad", "said", "sail", "sat", "saw", "say", "sea", "see", "set", 
+  "sew", "she", "shy", "sic", "sig", "sin", "sip", "sir", "sis", "sit", "six", "ski", "sky", "sly", "sol",
+  "son", "sow", "spy", "stir", "stop", "such", "sum", "sun", "tab", "tad", "tag", "tan", "tap", "tar", "tat", 
+  "tax", "tea", "tee", "ten", "the", "tie", "tin", "tip", "toe", "ton", "too", "top", "toy", "try", "tub", 
+  "tug", "two", "use", "van", "vat", "vet", "via", "vie", "vow", "wad", "wag", "war", "was", "wax", "way", 
+  "web", "wed", "wee", "wet", "who", "why", "wig", "win", "wit", "woe", "won", "woo", "wow", "yes", "yet", 
+  "you", "zip", "zoo",
   
-  // 3-letter words
-  "act", "add", "age", "ago", "air", "all", "and", "ant", "any", "arm", "art", "ask", "ate", "bad", "bag", "bat", "bed", "bee", "beg", "bet", "big", "bit", "box", "boy", "bug", "bus", "but", "buy", "cab", "can", "cap", "car", "cat", "cow", "cry", "cup", "cut", "dad", "day", "did", "die", "dig", "dog", "dot", "dry", "due", "ear", "eat", "egg", "end", "eye", "far", "fat", "few", "fig", "fit", "fix", "fly", "for", "fox", "fun", "gas", "get", "got", "gun", "had", "has", "hat", "her", "hid", "him", "his", "hit", "hot", "how", "hug", "ice", "ill", "ink", "its", "jar", "job", "joy", "key", "kid", "kit", "lay", "led", "leg", "let", "lid", "lie", "lip", "lot", "low", "mad", "man", "map", "may", "men", "met", "mix", "mom", "mud", "mug", "nap", "net", "new", "nod", "not", "now", "nut", "odd", "off", "oil", "old", "one", "our", "out", "own", "pad", "pan", "pat", "pay", "pen", "pet", "pie", "pig", "pin", "pit", "pot", "put", "ran", "rat", "raw", "red", "rid", "rip", "row", "run", "sad", "sat", "saw", "say", "sea", "see", "set", "sew", "she", "shy", "sin", "sir", "sit", "six", "ski", "sky", "sly", "spy", "sun", "tag", "tap", "tax", "tea", "ten", "the", "tie", "tin", "tip", "toe", "too", "top", "toy", "try", "two", "use", "van", "war", "was", "way", "web", "wet", "who", "why", "win", "won", "yes", "yet", "you", "zip", "zoo",
-  
-  // 4-letter words
-  "able", "acid", "aged", "also", "area", "army", "away", "baby", "back", "ball", "band", "bank", "base", "bath", "bear", "beat", "been", "beer", "bell", "belt", "best", "bill", "bird", "blow", "blue", "boat", "body", "bomb", "bond", "bone", "book", "boom", "born", "boss", "both", "bowl", "bulk", "burn", "bush", "busy", "call", "calm", "came", "camp", "card", "care", "case", "cash", "cast", "cell", "chat", "chip", "city", "club", "coal", "coat", "code", "cold", "come", "cook", "cool", "cope", "copy", "core", "cost", "crew", "crop", "dark", "data", "date", "dawn", "days", "dead", "deal", "dean", "dear", "debt", "deep", "deny", "desk", "dial", "diet", "dirt", "disc", "disk", "does", "done", "door", "dose", "down", "draw", "drew", "drop", "drug", "dual", "duke", "dust", "duty", "each", "earn", "ease", "east", "easy", "edge", "else", "even", "ever", "evil", "exit", "face", "fact", "fail", "fair", "fall", "farm", "fast", "fate", "fear", "feed", "feel", "feet", "fell", "felt", "file", "fill", "film", "find", "fine", "fire", "firm", "fish", "five", "flat", "flow", "food", "foot", "ford", "form", "fort", "four", "free", "from", "fuel", "full", "fund", "gain", "game", "gate", "gave", "gear", "gene", "gift", "girl", "give", "glad", "goal", "goes", "gold", "golf", "gone", "good", "gray", "grew", "grey", "grow", "gulf", "hair", "half", "hall", "hand", "hang", "hard", "harm", "hate", "have", "head", "hear", "heat", "held", "hell", "help", "here", "hero", "high", "hill", "hire", "hold", "hole", "holy", "home", "hope", "host", "hour", "huge", "hung", "hunt", "hurt", "idea", "inch", "into", "iron", "item", "jack", "jane", "jean", "john", "join", "jump", "jury", "just", "keen", "keep", "kent", "kept", "kick", "kill", "kind", "king", "knew", "know", "lack", "lady", "laid", "lake", "land", "lane", "last", "late", "lead", "left", "less", "life", "lift", "like", "line", "link", "list", "live", "load", "loan", "lock", "logo", "long", "look", "lord", "lose", "loss", "lost", "love", "luck", "made", "mail", "main", "make", "male", "many", "mark", "mass", "matt", "meal", "mean", "meat", "meet", "menu", "mere", "mike", "mile", "milk", "mill", "mind", "mine", "miss", "mode", "mood", "moon", "more", "most", "move", "much", "must", "name", "navy", "near", "neck", "need", "news", "next", "nice", "nick", "nine", "none", "nose", "note", "okay", "once", "only", "onto", "open", "oral", "over", "pace", "pack", "page", "paid", "pain", "pair", "palm", "park", "part", "pass", "past", "path", "peak", "pick", "pink", "pipe", "plan", "play", "plot", "plug", "plus", "poll", "pool", "poor", "port", "post", "pull", "pure", "push", "race", "rail", "rain", "rank", "rare", "rate", "read", "real", "rear", "rely", "rent", "rest", "rice", "rich", "ride", "ring", "rise", "risk", "road", "rock", "role", "roll", "roof", "room", "root", "rose", "rule", "rush", "ruth", "safe", "said", "sake", "sale", "salt", "same", "sand", "save", "seat", "seed", "seek", "seem", "seen", "self", "sell", "send", "sent", "sept", "ship", "shop", "shot", "show", "shut", "sick", "side", "sign", "site", "size", "skin", "slip", "slow", "snow", "soft", "soil", "sold", "sole", "some", "song", "soon", "sort", "soul", "spot", "star", "stay", "step", "stop", "such", "suit", "sure", "take", "tale", "talk", "tall", "tank", "tape", "task", "team", "tech", "tell", "tend", "term", "test", "text", "than", "that", "them", "then", "they", "thin", "this", "thus", "time", "tiny", "told", "toll", "tone", "tony", "took", "tool", "tour", "town", "tree", "trip", "true", "tune", "turn", "twin", "type", "unit", "upon", "used", "user", "vary", "vast", "very", "vice", "view", "vote", "wage", "wait", "wake", "walk", "wall", "want", "ward", "warm", "wash", "wave", "ways", "weak", "wear", "week", "well", "went", "were", "west", "what", "when", "whom", "wide", "wife", "wild", "will", "wind", "wine", "wing", "wire", "wise", "wish", "with", "wood", "word", "wore", "work", "yard", "yeah", "year", "your", "zero", "zone",
-  
-  // 5-letter words
-  "about", "above", "abuse", "actor", "adapt", "added", "admit", "adopt", "after", "again", "agent", "agree", "ahead", "alarm", "album", "alert", "alike", "alive", "allow", "along", "alter", "among", "anger", "angle", "angry", "anime", "ankle", "apart", "apple", "apply", "arena", "argue", "arise", "armor", "array", "arrow", "asset", "avoid", "award", "aware", "awful", "baker", "basic", "basis", "beach", "began", "begin", "being", "below", "bench", "billy", "birth", "black", "blade", "blame", "blank", "blast", "bleed", "blend", "bless", "blind", "block", "blood", "board", "boost", "booth", "bound", "brain", "brand", "brave", "bread", "break", "breed", "brick", "brief", "bring", "broad", "broke", "brown", "build", "built", "buyer", "cable", "cache", "carry", "catch", "cause", "chain", "chair", "chart", "chase", "cheap", "check", "chess", "chest", "chief", "child", "china", "chose", "civil", "claim", "class", "clean", "clear", "click", "clock", "close", "cloud", "coach", "coast", "could", "count", "court", "cover", "craft", "crash", "crazy", "cream", "crime", "cross", "crowd", "crown", "curve", "cycle", "daily", "dance", "dated", "dealt", "death", "debut", "delay", "depth", "doubt", "dozen", "draft", "drama", "drawn", "dream", "dress", "drill", "drink", "drive", "drove", "dying", "eager", "early", "earth", "eight", "elite", "empty", "enemy", "enjoy", "enter", "entry", "equal", "error", "event", "every", "exact", "exist", "extra", "faith", "false", "fault", "favor", "fever", "fewer", "fiber", "field", "fifty", "fight", "final", "first", "fixed", "flash", "fleet", "flight", "floor", "fluid", "focus", "force", "forth", "forty", "forum", "found", "frame", "frank", "fraud", "fresh", "front", "fruit", "fully", "funny", "giant", "given", "glass", "globe", "going", "grace", "grade", "grand", "grant", "grass", "great", "green", "gross", "group", "grown", "guard", "guess", "guest", "guide", "guild", "happy", "harry", "heart", "heavy", "hello", "hence", "henry", "horse", "hotel", "house", "human", "ideal", "image", "index", "inner", "input", "issue", "japan", "jimmy", "joint", "jones", "judge", "juice", "knife", "known", "label", "large", "laser", "later", "laugh", "layer", "learn", "lease", "least", "leave", "legal", "level", "lewis", "light", "limit", "links", "liver", "lives", "local", "logic", "loose", "lower", "lucky", "lunch", "lying", "magic", "major", "maker", "march", "match", "maybe", "mayor", "meant", "media", "metal", "might", "minor", "minus", "mixed", "model", "money", "month", "moral", "motor", "mount", "mouse", "mouth", "movie", "music", "needs", "never", "newly", "night", "noise", "north", "novel", "nurse", "occur", "ocean", "offer", "often", "order", "other", "ought", "paint", "panel", "paper", "party", "patch", "peace", "phase", "phone", "photo", "piano", "piece", "pilot", "pitch", "place", "plain", "plane", "plant", "plate", "point", "poker", "pound", "power", "press", "price", "pride", "prime", "print", "prior", "prize", "proof", "proud", "prove", "queen", "quick", "quiet", "quite", "radio", "raise", "range", "rapid", "ratio", "reach", "ready", "realm", "refer", "right", "rival", "river", "robin", "roger", "roman", "rough", "round", "route", "royal", "rural", "scale", "scene", "scope", "score", "sense", "serve", "seven", "shall", "shape", "share", "sharp", "sheet", "shelf", "shell", "shift", "shirt", "shock", "shoot", "short", "shown", "sight", "silly", "simon", "since", "sixth", "skill", "sleep", "slide", "small", "smart", "smile", "smith", "smoke", "solid", "solve", "sorry", "sound", "south", "space", "spare", "speak", "speed", "spend", "spent", "split", "spoke", "sport", "staff", "stage", "stake", "stand", "start", "state", "steam", "steel", "stick", "still", "stock", "stone", "stood", "store", "storm", "story", "strip", "stuck", "study", "style", "sugar", "suite", "super", "sweet", "table", "taken", "taste", "taxes", "teach", "teeth", "terry", "texas", "thank", "theft", "their", "theme", "there", "thick", "thing", "think", "third", "those", "three", "threw", "throw", "tight", "times", "tired", "title", "today", "token", "tooth", "topic", "total", "touch", "tough", "tower", "track", "trade", "train", "treat", "trend", "trial", "tried", "tries", "truck", "truly", "trust", "truth", "twice", "twist", "uncle", "under", "union", "unique", "unity", "until", "upper", "upset", "urban", "usage", "usual", "valid", "value", "video", "virus", "visit", "vital", "voice", "waste", "watch", "water", "wheel", "where", "which", "while", "white", "whole", "whose", "woman", "women", "world", "worry", "worse", "worst", "worth", "would", "wound", "write", "wrong", "yield", "young", "youth",
+  // Add some longer words
+  "about", "above", "abuse", "actor", "adapt", "admit", "adopt", "adult", "after", "again", "agent", 
+  "agree", "ahead", "album", "alive", "allow", "alone", "along", "alter", "among", "anger", "angle", 
+  "angry", "animal", "ankle", "answer", "anyone", "appear", "apple", "apply", "arena", "argue", "arise", 
+  "around", "array", "arrow", "artist", "aside", "asleep", "aspect", "assay", "assess", "asset", "assist", 
+  "assume", "attack", "attend", "author", "autumn", "avail", "avoid", "award", "aware", "awful", "backs", 
+  "badly", "baked", "based", "basic", "basis", "battle", "beach", "bears", "began", "begin", "begun", 
+  "being", "below", "bench", "bible", "birth", "black", "blade", "blame", "blank", "blast", "blaze", 
+  "blend", "bless", "blind", "block", "blood", "bloom", "blown", "blues", "blunt", "board", "boast", 
+  "bonds", "bones", "bonus", "books", "boost", "booth", "boots", "born", "bound", "bouts", "boxed", 
+  "boxes", "brain", "brake", "brand", "brave", "bread", "break", "breed", "brick", "bride", "brief", 
+  "bring", "brink", "broad", "broke", "brown", "brunt", "brush", "build", "built", "bulbs", "bulge", 
+  "bulky", "bunch", "burns", "burnt", "burst", "buses", "buyer", "cabin", "cable", "cache", "cakes", 
+  "calls", "camps", "canal", "candy", "cards", "cared", "cares", "cargo", "carry", "carve", "cases", 
+  "caste", "catch", "cause", "cease", "chain", "chair", "chalk", "charm", "chart", "chase", "cheap", 
+  "cheat", "check", "cheek", "cheer", "chess", "chest", "chief", "child", "chill", "china", "chips", 
+  "choir", "chose", "chunk", "cigar", "claim", "clamp", "clean", "clear", "clerk", "click", "cliff", 
+  "climb", "clock", "close", "cloth", "cloud", "clout", "clown", "clues", "coach", "coast", "coats", 
+  "coins", "color", "comes", "comic", "coral", "costs", "could", "count", "court", "cover", "crack", 
+  "craft", "crane", "crash", "crate", "crazy", "cream", "creek", "crest", "crime", "crisp", "cross", 
+  "crowd", "crown", "crude", "cruel", "crush", "crust", "cubic", "curry", "curve", "cycle", "daily", 
+  "dairy", "dance", "dated", "dates", "deals", "dealt", "death", "debit", "debut", "decay", "decks", 
+  "delay", "delta", "dense", "depth", "derby", "desks", "deter", "devil", "diary", "digit", "dilute", 
+  "dimes", "dimly", "diner", "dirty", "disco", "discs", "disks", "ditch", "diver", "docks", "doing", 
+  "dolls", "donor", "doors", "doubt", "dough", "drank", "drawn", "draws", "dread", "dream", "dress", 
+  "dried", "drift", "drill", "drink", "drive", "drops", "drove", "drunk", "ducks", "duchy", "ducks", 
+  "dully", "dummy", "dumps", "dunno", "dusky", "dusty", "dwarf", "dwell", "dying", "eager", "eagle", 
+  "early", "earth", "eased", "eaten", "edges", "eight", "elbow", "elder", "elect", "elite", "empty", 
+  "ended", "enemy", "enjoy", "enter", "entry", "equal", "error", "essay", "ethic", "event", "every", 
+  "exact", "exist", "extra", "fable", "faced", "faces", "facts", "faded", "fails", "faint", "faith", 
+  "falls", "false", "famed", "fancy", "fares", "farms", "fatal", "fatty", "fault", "favor", "fears", 
+  "feast", "feels", "fence", "ferry", "fever", "fewer", "fiant", "field", "fiery", "fifth", "fifty", 
+  "fight", "filer", "files", "fills", "films", "final", "finds", "fined", "finer", "fired", "fires", 
+  "firms", "first", "fists", "fixed", "fixes", "flags", "flair", "flame", "flank", "flash", "flask", 
+  "flats", "fleet", "flesh", "flies", "float", "flock", "flood", "floor", "flown", "flows", "fluid", 
+  "flung", "flush", "flute", "foams", "focal", "focus", "foggy", "folds", "folks", "folly", "foods", 
+  "fools", "force", "forge", "forms", "forth", "forty", "forum", "found", "frame", "fraud", "fresh", 
+  "fried", "front", "frost", "fruit", "fudge", "fuels", "fully", "funds", "funky", "funny", "gains", 
+  "games", "gangs", "gates", "gauge", "gears", "genes", "genre", "germs", "ghost", "giant", "gifts", 
+  "girls", "given", "gives", "gland", "glass", "gleam", "gloomy", "glory", "gloss", "glove", "goals", 
+  "going", "goods", "grace", "grade", "grains", "grams", "grand", "grant", "grape", "graph", "grasp", 
+  "grass", "grave", "great", "greed", "green", "greet", "grief", "grill", "grind", "grips", "groan", 
+  "gross", "group", "grove", "grown", "grows", "guard", "guess", "guest", "guide", "guild", "guilt", 
+  "habit", "hairs", "halls", "hands", "handy", "hangs", "happy", "harsh", "haste", "hasty", "hatch", 
+  "hated", "hates", "haunt", "haven", "havoc", "hawks", "heads", "heaps", "heard", "heart", "heath", 
+  "heavy", "hedge", "heels", "hello", "helps", "hence", "herbs", "highs", "hills", "hints", "hired", 
+  "hobby", "holds", "holes", "holly", "homes", "honey", "honor", "hooks", "hoped", "hopes", "horns", 
+  "horse", "hosts", "hotel", "hours", "house", "human", "humid", "humor", "hunch", "hurry", "hurts", 
+  "husks", "husky", "hype", "ideal", "ideas", "idiom", "idiot", "image", "imply", "inbox", "incur", 
+  "index", "indie", "inner", "input", "inset", "irony", "issue", "items", "ivory", "jails", "japan", 
+  "jeans", "jelly", "jewel", "jiffy", "joins", "joint", "jokes", "jolly", "jones", "judge", "juice", 
+  "jumps", "junks", "junta", "keeps", "kicks", "kills", "kinds", "kings", "kitty", "knife", "knock", 
+  "knots", "known", "knows", "label", "lacks", "lakes", "lamps", "lands", "lanes", "large", "laser", 
+  "later", "laugh", "layer", "leads", "leaks", "learn", "lease", "leash", "least", "leave", "ledge", 
+  "legal", "lemon", "level", "lever", "light", "liked", "likes", "limbs", "limit", "lined", "linen", 
+  "liner", "lines", "links", "lions", "lists", "lived", "liver", "lives", "loads", "loans", "lobby", 
+  "local", "locks", "lodge", "logic", "loner", "looks", "loops", "loose", "lords", "lorry", "loses", 
+  "lotus", "loved", "lover", "loves", "lower", "loyal", "lucid", "lucky", "lumps", "lunch", "lungs", 
+  "lurch", "lying", "magic", "mails", "maine", "major", "maker", "males", "manor", "march", "marks", 
+  "marry", "marsh", "masks", "match", "mates", "maths", "maybe", "mayor", "meals", "means", "meant", 
+  "meats", "medal", "media", "meets", "melon", "melts", "mercy", "merge", "merit", "merry", "messy", 
+  "metal", "meter", "midst", "might", "miles", "mills", "minds", "miner", "mines", "minor", "mints", 
+  "minus", "mists", "mixed", "mixes", "moans", "model", "moods", "moons", "motor", "mount", "mouse", 
+  "mouth", "moved", "moves", "movie", "music", "myths", "nails", "naked", "named", "names", "nasal", 
+  "nasty", "naval", "necks", "needs", "nerve", "nests", "never", "newer", "newly", "nicer", "niche", 
+  "niece", "night", "ninth", "noble", "nodes", "noise", "noisy", "nooks", "north", "noses", "notch", 
+  "noted", "notes", "novel", "nurse", "nylon", "oasis", "occur", "ocean", "offer", "often", "olden", 
+  "older", "olive", "omega", "onion", "onset", "opens", "opera", "orbit", "order", "organ", "other", 
+  "ought", "ounce", "outer", "owing", "owned", "owner", "oxide", "paced", "paces", "packs", "pages", 
+  "pains", "paint", "pairs", "panel", "panic", "pants", "paper", "parks", "parts", "party", "pasta", 
+  "paste", "patch", "paths", "patio", "pause", "peace", "peach", "peaks", "pearl", "pears", "peers", 
+  "pence", "penis", "penny", "perch", "perks", "pests", "petty", "phase", "phone", "photo", "piano", 
+  "picks", "piece", "piers", "piles", "pills", "pilot", "pinch", "pines", "pipes", "pitch", "pixel", 
+  "pizza", "place", "plain", "plane", "plans", "plant", "plate", "plays", "plaza", "plead", "plots", 
+  "pluck", "plugs", "plump", "point", "poked", "polar", "poles", "polls", "ponds", "pools", "porch", 
+  "pores", "ports", "posed", "poses", "posts", "pouch", "pound", "power", "press", "price", "pride", 
+  "prime", "print", "prior", "prize", "probe", "prone", "proof", "props", "prose", "proud", "prove", 
+  "proxy", "pulls", "pulse", "pumps", "punch", "pupil", "puppy", "purge", "purse", "quack", "queen", 
+  "query", "quest", "queue", "quick", "quiet", "quilt", "quite", "quote", "races", "racks", "radar", 
+  "radio", "rails", "rainy", "raise", "rally", "ranch", "range", "ranks", "rapid", "rated", "rates", 
+  "ratio", "razor", "reach", "react", "reads", "ready", "realm", "rebel", "refer", "reign", "reins", 
+  "relax", "relay", "remit", "renal", "renew", "rents", "repay", "reply", "resin", "rests", "rider", 
+  "rides", "ridge", "rifle", "right", "rigid", "rings", "rinse", "risen", "rises", "risks", "risky", 
+  "rites", "ritzy", "rival", "river", "roads", "roars", "robot", "rocks", "rocky", "rogue", "roles", 
+  "rolls", "roman", "roofs", "rooms", "roots", "ropes", "roses", "rough", "round", "route", "rover", 
+  "royal", "rugby", "ruins", "ruled", "ruler", "rules", "rural", "rusty", "sadly", "safer", "saint", 
+  "salad", "sales", "salon", "sandy", "sands", "satin", "sauce", "saved", "saves", "scale", "scalp", 
+  "scant", "scare", "scarf", "scary", "scene", "scent", "scoop", "scope", "score", "scorn", "scout", 
+  "scrap", "screw", "scrub", "seats", "seeds", "seeks", "seems", "seize", "sells", "sends", "sense", 
+  "serum", "serve", "setup", "seven", "sewer", "shade", "shaft", "shake", "shall", "shame", "shape", 
+  "share", "shark", "sharp", "shave", "shear", "sheds", "sheep", "sheet", "shelf", "shell", "shift", 
+  "shine", "shiny", "ships", "shirt", "shock", "shoes", "shone", "shook", "shoot", "shops", "shore", 
+  "short", "shots", "shout", "shown", "shows", "shrug", "sides", "siege", "sight", "signs", "silly", 
+  "since", "sings", "sinus", "sites", "sixth", "sixty", "sized", "sizes", "skies", "skill", "skins", 
+  "skirt", "skull", "slate", "slave", "sleek", "sleep", "slept", "slice", "slide", "slime", "slips", 
+  "slope", "slots", "slums", "smart", "smell", "smile", "smoke", "snake", "snaps", "sneak", "sniff", 
+  "snore", "snowy", "snuck", "sober", "socks", "sofas", "soils", "solar", "solid", "solve", "songs", 
+  "sonic", "sorry", "sorts", "souls", "sound", "south", "space", "spare", "spark", "spars", "spate", 
+  "spawn", "speak", "spear", "speck", "speed", "spell", "spend", "spent", "spice", "spicy", "spike", 
+  "spill", "spine", "spite", "split", "spoil", "spoke", "spoon", "sport", "spots", "spray", "spurs", 
+  "squad", "stack", "staff", "stage", "stain", "stair", "stake", "stale", "stamp", "stand", "stare", 
+  "stark", "start", "state", "stays", "steak", "steal", "steam", "steel", "steep", "steer", "stems", 
+  "steps", "stern", "stick", "stiff", "still", "sting", "stink", "stint", "stock", "stole", "stone", 
+  "stony", "stood", "stool", "stops", "store", "storm", "story", "stout", "stove", "straw", "stray", 
+  "strip", "stuck", "stuff", "style", "suede", "sugar", "suite", "suits", "sunny", "super", "surge", 
+  "sushi", "swamp", "swans", "sweat", "sweep", "sweet", "swept", "swift", "swing", "swiss", "sword", 
+  "swung", "syrup", "table", "taboo", "tacky", "taffy", "tails", "taken", "takes", "tales", "talks", 
+  "tanks", "tapes", "tardy", "tarts", "tasks", "taste", "tasty", "taunt", "taxed", "taxes", "taxis", 
+  "teach", "teams", "tears", "tease", "teenage", "teeth", "tells", "tempo", "tends", "tenet", "tenor", 
+  "tense", "tenth", "tents", "terms", "tests", "texts", "thank", "theft", "their", "theme", "there", 
+  "these", "thick", "thief", "thigh", "thing", "think", "third", "thong", "thorn", "those", "three", 
+  "threw", "throw", "thumb", "thyme", "tidal", "tides", "tiger", "tight", "tiles", "timed", "timer", 
+  "times", "timid", "tinge", "tipsy", "tired", "titan", "tithe", "title", "toast", "today", "toilet", 
+  "token", "tombs", "tonal", "toned", "toner", "tongs", "tonic", "tools", "tooth", "topic", "torch", 
+  "torso", "torus", "total", "touch", "tough", "tours", "towel", "tower", "towns", "toxic", "toxin", 
+  "trace", "track", "tract", "trade", "trail", "train", "trait", "tramp", "trams", "traps", "trash", 
+  "trays", "tread", "treat", "treble", "trees", "trend", "trial", "tribe", "trick", "tried", "trier", 
+  "tries", "trims", "tripe", "trips", "trite", "troop", "trope", "trout", "truce", "truck", "truly", 
+  "trunk", "truss", "trust", "truth", "tucks", "tunes", "tunic", "turbo", "turns", "tutor", "tweet", 
+  "twice", "twigs", "twins", "twirl", "twist", "types", "tyres", "ulcer", "ultra", "uncle", "under", 
+  "union", "unite", "units", "unity", "until", "upper", "upset", "urban", "urged", "urine", "usage", 
+  "users", "using", "usual", "utter", "vague", "valid", "value", "valve", "vapor", "vault", "vegan", 
+  "veins", "venom", "venue", "verbs", "verge", "versa", "verse", "verso", "verve", "vests", "vials", 
+  "video", "views", "villa", "vines", "vinyl", "viral", "virus", "visas", "visit", "vital", "vivid", 
+  "vocal", "vodka", "voice", "volts", "voted", "voter", "votes", "vouch", "vowel", "vying", "wacky", 
+  "wafer", "waged", "wager", "wages", "wagon", "waist", "waits", "waive", "waken", "wales", "walks", 
+  "walls", "wands", "wants", "wards", "wares", "warms", "warns", "waste", "watch", "water", "waved", 
+  "waves", "waxed", "wears", "weary", "weave", "wedge", "weeds", "weeks", "weigh", "weird", "wells", 
+  "welsh", "whale", "wheat", "wheel", "where", "which", "whiff", "while", "whims", "whine", "whiny", 
+  "whirl", "whisk", "white", "whole", "whoop", "whose", "wicks", "wider", "widow", "width", "wield", 
+  "wills", "wimpy", "winds", "windy", "wings", "winks", "wiper", "wired", "wires", "wiser", "wispy", 
+  "witch", "witty", "wives", "woken", "woman", "women", "woods", "woody", "wooed", "words", "wordy", 
+  "works", "world", "worms", "worry", "worse", "worst", "worth", "would", "wound", "woven", "wraps", 
+  "wrath", "wreck", "wrist", "write", "wrong", "wrote", "yacht", "yards", "yawns", "yearn", "years", 
+  "yells", "yield", "yikes", "yolks", "young", "yours", "youth", "yummy", "zebra", "zeros", "zesty", 
+  "zones"
+];
 
-  // More common words
-  "ability", "absolute", "academic", "accepted", "accident", "accuracy", "accurate", "achieved", "acquired", "activity", "actually", "addition", "adequate", "adjacent", "adjusted", "advanced", "advisory", "advocate", "affected", "aircraft", "alliance", "although", "aluminum", "analysis", "announce", "anything", "anywhere", "apparent", "appendix", "approach", "approval", "argument", "artistic", "assembly", "assuming", "athletic", "attached", "attitude", "attorney", "audience", "autonomy", "aviation", "bachelor", "bacteria", "baseball", "bathroom", "becoming", "benjamin", "birthday", "boundary", "breaking", "breeding", "building", "bulletin", "business", "calendar", "campaign", "capacity", "category", "champion", "chemical", "children", "circular", "civilian", "clearing", "clinical", "clothing", "collapse", "colonial", "colorful", "commence", "commerce", "complain", "complete", "composed", "compound", "computer", "conclude", "concrete", "conflict", "confused", "congress", "consider", "constant", "consumer", "continue", "contract", "contrary", "contrast", "convince", "corridor", "coverage", "covering", "creation", "creative", "criminal", "critical", "crossing", "cultural", "currency", "customer", "database", "daughter", "daylight", "deadline", "deciding", "decision", "decrease", "deferred", "definite", "delicate", "delivery", "describe", "designer", "detailed", "diabetes", "dialogue", "diameter", "directly", "director", "disabled", "disaster", "disclose", "discount", "discover", "disorder", "disposal", "distance", "distinct", "district", "dividend", "division", "doctrine", "document", "domestic", "dominant", "dominate", "doubtful", "dramatic", "dressing", "dropping", "duration", "dynamics", "economic", "educated", "educator", "educator", "electric", "emerging", "emission", "emphasis", "employee", "engineer", "enormous", "entirely", "entrance", "envelope", "equality", "equation", "estimate", "evaluate", "everyday", "everyone", "evidence", "exchange", "exciting", "exercise", "explicit", "exposure", "extended", "external", "facility", "familiar", "featured", "feedback", "festival", "monetary", "remember", "sentence", "tomorrow", "together", "strength", "positive", "question", "anything", "computer", "mountain", "building", "learning", "favorite", "interest", "possible", "education", "knowledge", "beautiful", "different", "important", "wonderful", "happier", "excellent", "adventure", "surprise", "fantastic", "incredible", "character", "challenge", "friendship", "happiness", "opportunity"
-]);
-
+// Check if a word is valid
 export function isValidWord(word: string): boolean {
-  return dictionary.has(word.toLowerCase());
-}
-
-// Generate 7 random letters for the word game
-// Makes sure there are at least 2 vowels to ensure playable hands
-export function generateRandomLetters(): string[] {
-  const vowels = ['A', 'E', 'I', 'O', 'U'];
-  const consonants = ['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'];
-  
-  // Ensure at least 2 vowels
-  const randomLetters: string[] = [];
-  
-  // Add 2 random vowels
-  for (let i = 0; i < 2; i++) {
-    const randomIndex = Math.floor(Math.random() * vowels.length);
-    randomLetters.push(vowels[randomIndex]);
-  }
-  
-  // Add 5 random letters (can be vowels or consonants)
-  for (let i = 0; i < 5; i++) {
-    // 20% chance of another vowel, 80% chance of consonant
-    if (Math.random() < 0.2) {
-      const randomIndex = Math.floor(Math.random() * vowels.length);
-      randomLetters.push(vowels[randomIndex]);
-    } else {
-      const randomIndex = Math.floor(Math.random() * consonants.length);
-      randomLetters.push(consonants[randomIndex]);
-    }
-  }
-  
-  // Shuffle the letters
-  return randomLetters.sort(() => Math.random() - 0.5);
-}
-
-// Calculate word score (vowels = 1 point, consonants = 2 points)
-export function calculateWordScore(word: string): number {
-  const vowels = new Set(['a', 'e', 'i', 'o', 'u']);
-  let score = 0;
-  
-  for (const char of word.toLowerCase()) {
-    if (vowels.has(char)) {
-      score += 1; // Vowels are 1 point
-    } else {
-      score += 2; // Consonants are 2 points
-    }
-  }
-  
-  return score;
+  return commonWords.includes(word.toLowerCase());
 }

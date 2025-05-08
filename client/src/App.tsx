@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { generateRandomLetters } from "./lib/utils";
+import { isValidWord } from "./lib/dictionary";
 
 // Simple Login Form Component
 function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
@@ -203,38 +204,81 @@ function GameLobby({
 function WordGame({ username, onBack }: { username: string, onBack: () => void }) {
   const [gameLetters, setGameLetters] = useState<string[]>(generateRandomLetters(7));
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
-  const [submittedWords, setSubmittedWords] = useState<{word: string, score: number}[]>([]);
+  const [submittedWords, setSubmittedWords] = useState<{word: string, score: number, isValid: boolean}[]>([]);
   const [timeLeft, setTimeLeft] = useState(30); // Increased to 30 seconds
   const [roundEnded, setRoundEnded] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   
   // Handle letter selection
   const selectLetter = (letter: string, index: number) => {
-    // Only add if not already selected and round not ended
-    if (!selectedLetters.includes(letter + index) && !roundEnded) {
+    // Only add if not already selected and round not ended and hasn't submitted yet
+    if (!selectedLetters.includes(letter + index) && !roundEnded && !hasSubmitted) {
       setSelectedLetters([...selectedLetters, letter + index]);
     }
   };
   
   // Clear selected letters
   const clearSelection = () => {
-    setSelectedLetters([]);
+    if (!hasSubmitted) {
+      setSelectedLetters([]);
+    }
   };
   
   // Submit current word
   const submitWord = () => {
-    // Only allow submission if time hasn't elapsed
-    if (roundEnded) return;
+    // Only allow submission if time hasn't elapsed and player hasn't submitted yet
+    if (roundEnded || hasSubmitted) return;
     
     const word = selectedLetters.map(l => l.charAt(0)).join("");
-    if (word.length >= 3) {
-      // Calculate a simple score (1 point per letter, bonus for longer words)
-      let score = word.length;
-      if (word.length > 5) score += 3;
-      else if (word.length > 3) score += 1;
-      
-      setSubmittedWords([...submittedWords, { word, score }]);
-      setSelectedLetters([]);
+    
+    if (word.length < 3) {
+      setFeedback({
+        message: "Word must be at least 3 letters long",
+        type: "error"
+      });
+      setTimeout(() => setFeedback(null), 3000);
+      return;
     }
+    
+    // Check if word is valid
+    const valid = isValidWord(word);
+    
+    if (!valid) {
+      setFeedback({
+        message: `"${word}" is not a valid word in our dictionary`,
+        type: "error"
+      });
+      setTimeout(() => setFeedback(null), 3000);
+      return;
+    }
+    
+    // Calculate a simple score (1 point per letter, bonus for longer words)
+    let score = 0;
+    
+    // Add points for each letter (vowels=1, consonants=2)
+    for (const letter of word) {
+      if (/[AEIOU]/i.test(letter)) {
+        score += 1; // Vowels are worth 1 point
+      } else {
+        score += 2; // Consonants are worth 2 points
+      }
+    }
+    
+    // Add bonus for longer words
+    if (word.length > 5) score += 3;
+    else if (word.length > 3) score += 1;
+    
+    // Add the word to submitted words
+    setSubmittedWords([...submittedWords, { word, score, isValid: valid }]);
+    setSelectedLetters([]);
+    setHasSubmitted(true); // Mark that player has submitted a word for this round
+    
+    setFeedback({
+      message: `"${word}" accepted! +${score} points`,
+      type: "success"
+    });
+    setTimeout(() => setFeedback(null), 3000);
   };
   
   // Reset the game for a new round
@@ -242,7 +286,13 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     setTimeLeft(30);
     setRoundEnded(false);
     setSelectedLetters([]);
+    setHasSubmitted(false); // Reset submission state
     setGameLetters(generateRandomLetters(7)); // Generate new letters for the new round
+    setFeedback({
+      message: "New round started! You have 30 seconds",
+      type: "info"
+    });
+    setTimeout(() => setFeedback(null), 3000);
   };
   
   // Simulate countdown timer
@@ -300,6 +350,24 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                   : "Select letters to form a word, then click Submit"}
               </p>
               
+              {/* Feedback message */}
+              {feedback && (
+                <div className={`mb-2 p-2 rounded-md text-center ${
+                  feedback.type === 'success' ? 'bg-green-100 text-green-800' :
+                  feedback.type === 'error' ? 'bg-red-100 text-red-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {feedback.message}
+                </div>
+              )}
+              
+              {/* Game status */}
+              {hasSubmitted && !roundEnded && (
+                <div className="mb-2 p-2 bg-yellow-100 text-yellow-800 rounded-md text-center">
+                  Word submitted! Waiting for next round...
+                </div>
+              )}
+              
               {/* Selected word display */}
               <div className="h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                 {selectedLetters.length > 0 ? (
@@ -312,6 +380,8 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                   </div>
                 ) : roundEnded ? (
                   <span className="text-gray-600 font-medium">Round complete</span>
+                ) : hasSubmitted ? (
+                  <span className="text-gray-600">Already submitted for this round</span>
                 ) : (
                   <span className="text-gray-400">Your word will appear here</span>
                 )}
@@ -323,12 +393,12 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                   <button
                     key={index}
                     className={`w-14 h-14 flex items-center justify-center rounded-lg text-2xl font-bold border-2 
-                      ${selectedLetters.includes(letter + index) || roundEnded
+                      ${selectedLetters.includes(letter + index) || roundEnded || hasSubmitted
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                         : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50 hover:border-blue-400'
                       }`}
                     onClick={() => selectLetter(letter, index)}
-                    disabled={selectedLetters.includes(letter + index) || roundEnded}
+                    disabled={selectedLetters.includes(letter + index) || roundEnded || hasSubmitted}
                   >
                     {letter}
                     <span className="absolute bottom-1 right-1 text-xs">
@@ -352,20 +422,20 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                     <button
                       className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
                       onClick={clearSelection}
-                      disabled={selectedLetters.length === 0}
+                      disabled={selectedLetters.length === 0 || hasSubmitted}
                     >
                       Clear
                     </button>
                     <button
                       className={`px-6 py-2 rounded-md ${
-                        selectedLetters.length >= 3
+                        selectedLetters.length >= 3 && !hasSubmitted
                           ? "bg-blue-600 text-white hover:bg-blue-700"
                           : "bg-blue-200 text-blue-500 cursor-not-allowed"
                       }`}
                       onClick={submitWord}
-                      disabled={selectedLetters.length < 3}
+                      disabled={selectedLetters.length < 3 || hasSubmitted}
                     >
-                      Submit Word
+                      {hasSubmitted ? "Already Submitted" : "Submit Word"}
                     </button>
                   </>
                 )}
