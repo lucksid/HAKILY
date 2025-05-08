@@ -522,7 +522,15 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setPlayMode('single')}
+                  onClick={() => {
+                    setPlayMode('single');
+                    // Scroll to top when changing to single player mode
+                    setTimeout(() => {
+                      if (gameContainerRef.current) {
+                        gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
                 >
                   <div className="text-2xl mb-2">👤</div>
                   <div className="font-medium">Single Player</div>
@@ -535,7 +543,15 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setPlayMode('multi')}
+                  onClick={() => {
+                    setPlayMode('multi');
+                    // Scroll to top when changing to multiplayer mode
+                    setTimeout(() => {
+                      if (gameContainerRef.current) {
+                        gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }, 100);
+                  }}
                 >
                   <div className="text-2xl mb-2">👥</div>
                   <div className="font-medium">Multiplayer</div>
@@ -555,7 +571,15 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                         ? 'bg-blue-600 text-white' 
                         : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
-                    onClick={() => setTargetScore(score)}
+                    onClick={() => {
+                      setTargetScore(score);
+                      // Scroll to top when changing target score
+                      setTimeout(() => {
+                        if (gameContainerRef.current) {
+                          gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 100);
+                    }}
                   >
                     {score}
                   </button>
