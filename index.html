@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hakily - Educational Games</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #4a6cf7;
+    }
+    .logo {
+      font-size: 3rem;
+      position: relative;
+      display: inline-block;
+    }
+    .lightbulb {
+      position: absolute;
+      font-size: 2rem;
+      top: -10px;
+      right: -20px;
+    }
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #666;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #4a6cf7;
+      color: white;
+      text-decoration: none;
+      padding: 0.8rem 2rem;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #3a56c5;
+    }
+    .loading {
+      margin-top: 2rem;
+      font-style: italic;
+      color: #888;
+    }
+  </style>
+  <!-- If index.html is served from GitHub Pages, redirect to the app -->
+  <script>
+    // Check if we're on GitHub Pages
+    if (window.location.hostname.includes('github.io')) {
+      window.location.href = './dist/';
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      Hakil<span class="relative">y<span class="lightbulb">💡</span></span>
+    </div>
+    <h1>Educational Games Platform</h1>
+    <p>Challenge yourself. Challenge your pals!</p>
+    <a href="./client/index.html" class="btn">Launch App</a>
+    <p class="loading">Loading, please wait...</p>
+  </div>
+
+  <script>
+    // Redirect to the app after a short delay
+    setTimeout(function() {
+      window.location.href = './client/index.html';
+    }, 2000);
+  </script>
+</body>
+</html>
