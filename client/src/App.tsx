@@ -1318,33 +1318,17 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     if (playMode === 'single') {
       setRoundEnded(true);
     }
-    // In multiplayer mode, start auto-advance after submission
+    // In multiplayer mode, mark as submitted but don't immediately end the round
+    // This allows other players to still submit their answers until time runs out
     else if (playMode === 'multi') {
-      setRoundEnded(true);
+      // Only show feedback about submitting
+      setFeedback({
+        message: `Answer submitted! Waiting for round to complete...`,
+        type: "info"
+      });
       
       // Clear feedback after a few seconds
       setTimeout(() => setFeedback(null), 3000);
-      
-      // Start countdown from 5
-      setAutoAdvanceCountdown(5);
-      
-      // Create a 5-second countdown
-      const countdownInterval = setInterval(() => {
-        setAutoAdvanceCountdown(prevCount => {
-          if (prevCount === null || prevCount <= 1) {
-            clearInterval(countdownInterval);
-            return null;
-          }
-          return prevCount - 1;
-        });
-      }, 1000);
-      
-      // Advance to next problem after 5 seconds
-      setTimeout(() => {
-        clearInterval(countdownInterval);
-        setAutoAdvanceCountdown(null);
-        startNewRound();
-      }, 5000);
     }
     
     // Log that the round has ended for debugging
@@ -2092,48 +2076,17 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
     if (playMode === 'single') {
       setRoundEnded(true);
     }
-    // In multiplayer mode, start auto-advance after submission
+    // In multiplayer mode, mark as submitted but don't immediately end the round
+    // This allows other players to still submit their answers until time runs out
     else if (playMode === 'multi') {
-      setRoundEnded(true); // End the round after submission
+      // Only show feedback about submitting
+      setFeedback({
+        message: `Answer submitted! Waiting for round to complete...`,
+        type: "info"
+      });
       
-      // Hide current question if needed
-      if (currentQuestion) {
-        setCurrentQuestion({
-          ...currentQuestion,
-          question: isCorrect ? "Correct! Waiting for next question..." : "Incorrect! Waiting for next question...",
-        });
-      }
-      
-      // Show feedback for auto-advance
-      setTimeout(() => {
-        setFeedback({
-          message: `Next question in 5 seconds...`,
-          type: "info"
-        });
-      }, 3500);
-      
-      // Start countdown from 5
-      setTimeout(() => {
-        setAutoAdvanceCountdown(5);
-        
-        // Create a 5-second countdown
-        const countdownInterval = setInterval(() => {
-          setAutoAdvanceCountdown(prevCount => {
-            if (prevCount === null || prevCount <= 1) {
-              clearInterval(countdownInterval);
-              return null;
-            }
-            return prevCount - 1;
-          });
-        }, 1000);
-        
-        // Advance to next round after 5 seconds
-        setTimeout(() => {
-          clearInterval(countdownInterval);
-          setAutoAdvanceCountdown(null);
-          startNewRound();
-        }, 5000);
-      }, 3500);
+      // Clear feedback after a few seconds
+      setTimeout(() => setFeedback(null), 3000);
     }
   };
   
