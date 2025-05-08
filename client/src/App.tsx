@@ -238,46 +238,50 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
         type: "error"
       });
       setTimeout(() => setFeedback(null), 3000);
+      
+      // Mark as submitted even if the word is too short
+      setHasSubmitted(true);
       return;
     }
     
     // Check if word is valid
-    const valid = isValidWord(word);
+    const valid = isValidWord(word.toLowerCase());
     
-    if (!valid) {
-      setFeedback({
-        message: `"${word}" is not a valid word in our dictionary`,
-        type: "error"
-      });
-      setTimeout(() => setFeedback(null), 3000);
-      return;
-    }
-    
-    // Calculate a simple score (1 point per letter, bonus for longer words)
+    // Calculate score (only if word is valid)
     let score = 0;
     
-    // Add points for each letter (vowels=1, consonants=2)
-    for (const letter of word) {
-      if (/[AEIOU]/i.test(letter)) {
-        score += 1; // Vowels are worth 1 point
-      } else {
-        score += 2; // Consonants are worth 2 points
+    if (valid) {
+      // Add points for each letter (vowels=1, consonants=2)
+      for (const letter of word) {
+        if (/[AEIOU]/i.test(letter)) {
+          score += 1; // Vowels are worth 1 point
+        } else {
+          score += 2; // Consonants are worth 2 points
+        }
       }
+      
+      // Add bonus for longer words
+      if (word.length > 5) score += 3;
+      else if (word.length > 3) score += 1;
     }
     
-    // Add bonus for longer words
-    if (word.length > 5) score += 3;
-    else if (word.length > 3) score += 1;
-    
-    // Add the word to submitted words
+    // Always add the word to submitted words with valid flag
     setSubmittedWords([...submittedWords, { word, score, isValid: valid }]);
     setSelectedLetters([]);
     setHasSubmitted(true); // Mark that player has submitted a word for this round
     
-    setFeedback({
-      message: `"${word}" accepted! +${score} points`,
-      type: "success"
-    });
+    if (valid) {
+      setFeedback({
+        message: `"${word}" accepted! +${score} points`,
+        type: "success"
+      });
+    } else {
+      setFeedback({
+        message: `"${word}" is not a valid English word. No points earned.`,
+        type: "error"
+      });
+    }
+    
     setTimeout(() => setFeedback(null), 3000);
   };
   
@@ -449,6 +453,8 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>Create words using the provided letters</li>
                 <li>Vowels are worth 1 point, consonants are worth 2 points</li>
                 <li>Words must be at least 3 letters long</li>
+                <li>Words must be valid English words</li>
+                <li>You can only submit one word per round</li>
                 <li>Longer words earn bonus points</li>
                 <li>You have 30 seconds for each round</li>
               </ul>
@@ -466,9 +472,15 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 submittedWords.map((entry, i) => (
                   <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                     <span className="font-medium">{entry.word}</span>
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
-                      +{entry.score} pts
-                    </span>
+                    {entry.isValid ? (
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
+                        +{entry.score} pts
+                      </span>
+                    ) : (
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                        Invalid
+                      </span>
+                    )}
                   </div>
                 ))
               ) : (
