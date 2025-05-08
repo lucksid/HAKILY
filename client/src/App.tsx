@@ -490,8 +490,12 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     
     setTimeout(() => setFeedback(null), 3000);
     
+    // In single-player mode, immediately end the round to show the Next button
+    if (playMode === 'single') {
+      setRoundEnded(true);
+    }
     // In multiplayer mode, start auto-advance after submission
-    if (playMode === 'multi') {
+    else if (playMode === 'multi') {
       setRoundEnded(true); // End the round after submission
       
       // Show feedback for auto-advance
@@ -2079,8 +2083,12 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
     
     setTimeout(() => setFeedback(null), 3000);
     
+    // In single-player mode, immediately end the round to show the Next button
+    if (playMode === 'single') {
+      setRoundEnded(true);
+    }
     // In multiplayer mode, start auto-advance after submission
-    if (playMode === 'multi') {
+    else if (playMode === 'multi') {
       setRoundEnded(true); // End the round after submission
       
       // Hide current question if needed
