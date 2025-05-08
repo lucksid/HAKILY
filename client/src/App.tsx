@@ -2069,6 +2069,14 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
     if (playMode === 'multi') {
       setRoundEnded(true); // End the round after submission
       
+      // Hide current question if needed
+      if (currentQuestion) {
+        setCurrentQuestion({
+          ...currentQuestion,
+          question: isCorrect ? "Correct! Waiting for next question..." : "Incorrect! Waiting for next question...",
+        });
+      }
+      
       // Show feedback for auto-advance
       setTimeout(() => {
         setFeedback({
@@ -2106,12 +2114,16 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
   const startNewRound = () => {
     // Set time based on difficulty
     const timeForDifficulty = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 25 : 20;
+    
+    // Generate new question before showing it
+    const newQuestion = generateNewQuestion();
+    
+    // Update game state
     setTimeLeft(timeForDifficulty);
     setRoundEnded(false);
     setSelectedOption(null);
     setHasSubmitted(false); // Reset submission state
     setCurrentRound(prevRound => prevRound + 1);
-    generateNewQuestion(); // Generate new question for the new round
     
     setFeedback({
       message: `Round ${currentRound + 1} started! You have ${timeForDifficulty} seconds`,
@@ -2136,6 +2148,14 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
       
       // In multiplayer mode, automatically advance to next round after 5 seconds
       if (playMode === 'multi') {
+        // Hide current question if needed
+        if (currentQuestion) {
+          setCurrentQuestion({
+            ...currentQuestion,
+            question: "Time's up! Waiting for next question...",
+          });
+        }
+        
         // Update feedback to inform player of auto-advance
         setFeedback({
           message: `Time's up! Next question in 5 seconds...`,
@@ -2164,7 +2184,7 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
         }, 5000);
       }
     }
-  }, [timeLeft, playMode]);
+  }, [timeLeft, playMode, currentQuestion]);
   
   // Initialize the game with the first question
   useEffect(() => {
