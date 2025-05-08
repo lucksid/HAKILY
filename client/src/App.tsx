@@ -208,10 +208,10 @@ function GameLobby({
           }`}
           onClick={() => {
             setActiveTab('games');
-            // Scroll to top when switching tabs
-            if (lobbyContainerRef.current) {
-              lobbyContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            // Force window to scroll to top when switching tabs
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
           }}
         >
           Play Games
@@ -224,10 +224,10 @@ function GameLobby({
           }`}
           onClick={() => {
             setActiveTab('history');
-            // Scroll to top when switching tabs
-            if (lobbyContainerRef.current) {
-              lobbyContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            // Force window to scroll to top when switching tabs
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
           }}
         >
           Game History
@@ -441,10 +441,10 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     });
     setTimeout(() => setFeedback(null), 3000);
     
-    // Scroll to the top of the game area
-    if (gameContainerRef.current) {
-      gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    // Force window to scroll to top
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
   
   // Simulate countdown timer
@@ -524,11 +524,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                   }`}
                   onClick={() => {
                     setPlayMode('single');
-                    // Scroll to top when changing to single player mode
+                    // Force window to scroll to top
                     setTimeout(() => {
-                      if (gameContainerRef.current) {
-                        gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }, 100);
                   }}
                 >
@@ -545,11 +543,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                   }`}
                   onClick={() => {
                     setPlayMode('multi');
-                    // Scroll to top when changing to multiplayer mode
+                    // Force window to scroll to top
                     setTimeout(() => {
-                      if (gameContainerRef.current) {
-                        gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }, 100);
                   }}
                 >
@@ -573,11 +569,9 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                     }`}
                     onClick={() => {
                       setTargetScore(score);
-                      // Scroll to top when changing target score
+                      // Force window to scroll to top
                       setTimeout(() => {
-                        if (gameContainerRef.current) {
-                          gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }, 100);
                     }}
                   >
@@ -609,10 +603,10 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 setTotalScore(0);
                 startNewRound();
                 
-                // Ensure we scroll to the top when starting multiplayer game
-                if (gameContainerRef.current) {
-                  gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                // Force window to scroll to top
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
               }}
             >
               {playMode === 'single' ? 'Start Game' : 'Create Multiplayer Game'}
