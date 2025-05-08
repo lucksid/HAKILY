@@ -202,6 +202,8 @@ function GameLobby({
 
 // Simple Word Game Component
 function WordGame({ username, onBack }: { username: string, onBack: () => void }) {
+  const [gameMode, setGameMode] = useState<"setup" | "playing">("setup");
+  const [targetScore, setTargetScore] = useState<number>(100);
   const [gameLetters, setGameLetters] = useState<string[]>(generateRandomLetters(7));
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
   const [submittedWords, setSubmittedWords] = useState<{word: string, score: number, isValid: boolean}[]>([]);
@@ -209,6 +211,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
   const [roundEnded, setRoundEnded] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [feedback, setFeedback] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [totalScore, setTotalScore] = useState(0);
   
   // Handle letter selection
   const selectLetter = (letter: string, index: number) => {
@@ -310,6 +313,105 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
     }
   }, [timeLeft]);
   
+  // Update total score when submitted words change
+  useEffect(() => {
+    const newTotal = submittedWords.reduce((total, entry) => total + entry.score, 0);
+    setTotalScore(newTotal);
+    
+    // Check if player reached the target score
+    if (gameMode === "playing" && newTotal >= targetScore) {
+      setFeedback({
+        message: `Congratulations! You've reached the target score of ${targetScore} points!`,
+        type: "success"
+      });
+      setTimeout(() => {
+        if (confirm(`You've reached the target score of ${targetScore} points! Play again?`)) {
+          // Reset game for a new game
+          setGameMode("setup");
+          setSubmittedWords([]);
+          setTotalScore(0);
+        }
+      }, 1000);
+    }
+  }, [submittedWords]);
+  
+  // Start the game with selected target score
+  const startGame = () => {
+    setGameMode("playing");
+    setSubmittedWords([]);
+    setTotalScore(0);
+    startNewRound();
+  };
+  
+  // Game Setup Screen
+  if (gameMode === "setup") {
+    return (
+      <div className="max-w-4xl w-full mx-auto">
+        <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+          <div className="flex items-center">
+            <button
+              onClick={onBack}
+              className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            >
+              ← Back
+            </button>
+            <h1 className="text-2xl font-bold text-blue-600">Word Challenge</h1>
+          </div>
+          <div className="text-sm">
+            <span className="text-gray-500">Player:</span>
+            <span className="ml-1 font-medium">{username}</span>
+          </div>
+        </header>
+        
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-center mb-6">Game Setup</h2>
+          
+          <div className="max-w-md mx-auto space-y-6">
+            <div>
+              <h3 className="font-medium text-gray-700 mb-2">Target Score to Win</h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[100, 150, 200, 250, 300, 350, 400, 450, 500].map(score => (
+                  <button
+                    key={score}
+                    className={`px-4 py-2 rounded-md ${
+                      targetScore === score 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setTargetScore(score)}
+                  >
+                    {score}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-md">
+              <h3 className="font-bold text-blue-800 mb-2">Game Overview</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                Try to reach {targetScore} points before your opponents!
+              </p>
+              <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+                <li>Create words using the given letters</li>
+                <li>Vowels are worth 1 point, consonants are worth 2 points</li>
+                <li>Longer words earn bonus points</li>
+                <li>You have 30 seconds per round to submit a word</li>
+              </ul>
+            </div>
+            
+            <button 
+              className="w-full py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors"
+              onClick={startGame}
+            >
+              Start Game
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Main Game Screen
   return (
     <div className="max-w-4xl w-full mx-auto">
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
@@ -457,6 +559,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>You can only submit one word per round</li>
                 <li>Longer words earn bonus points</li>
                 <li>You have 30 seconds for each round</li>
+                <li>First to reach {targetScore} points wins!</li>
               </ul>
             </div>
           </div>
@@ -464,8 +567,11 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
         
         <div className="md:col-span-1">
           <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div className="p-4 bg-blue-600 text-white font-medium">
-              Submitted Words
+            <div className="p-4 bg-blue-600 text-white font-medium flex justify-between items-center">
+              <span>Submitted Words</span>
+              <span className="bg-white text-blue-800 px-2 py-1 rounded-md text-sm font-bold">
+                Target: {targetScore}
+              </span>
             </div>
             <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
               {submittedWords.length > 0 ? (
@@ -493,14 +599,28 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-4 bg-blue-600 text-white font-medium">
-              Players
+              Score Progress
             </div>
             <div className="p-4">
-              <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
+              <div className="flex justify-between items-center p-2 bg-blue-50 rounded mb-2">
                 <span className="font-medium">{username} (You)</span>
                 <span className="font-bold">
-                  {submittedWords.reduce((total, entry) => total + entry.score, 0)} pts
+                  {totalScore} / {targetScore} pts
                 </span>
+              </div>
+              
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                <div 
+                  className="bg-blue-600 h-4 rounded-full" 
+                  style={{ width: `${Math.min(100, (totalScore / targetScore) * 100)}%` }}
+                />
+              </div>
+              
+              <div className="text-center text-sm text-gray-500">
+                {totalScore >= targetScore 
+                  ? "Target score reached!" 
+                  : `${targetScore - totalScore} points to win`}
               </div>
             </div>
           </div>
