@@ -2098,7 +2098,9 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
   
   // Simulate countdown timer
   useEffect(() => {
-    if (timeLeft > 0) {
+    // In multiplayer mode, continue the timer even after submission
+    // In single player mode, stop the timer after submission
+    if (timeLeft > 0 && (playMode === 'multi' || !hasSubmitted)) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else {
@@ -2143,7 +2145,7 @@ function QuizGame({ username, onBack }: { username: string, onBack: () => void }
         }, 5000);
       }
     }
-  }, [timeLeft, playMode, currentQuestion]);
+  }, [timeLeft, playMode, currentQuestion, hasSubmitted]);
   
   // Initialize the game with the first question
   useEffect(() => {
