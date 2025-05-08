@@ -384,7 +384,8 @@ function GameLobby({
 function WordGame({ username, onBack }: { username: string, onBack: () => void }) {
   // Game phases
   const [gamePhase, setGamePhase] = useState<"setup" | "playing">("setup");
-  // Game type (single or multiplayer)
+  // Game type (single or multiplayer) - disable multiplayer on GitHub Pages
+  const isGitHubDeployment = isGitHubPages();
   const [playMode, setPlayMode] = useState<"single" | "multi">("single");
   const [targetScore, setTargetScore] = useState<number>(100);
   const [gameLetters, setGameLetters] = useState<string[]>(generateRandomLetters(7));
@@ -1235,7 +1236,8 @@ function App() {
 function MathGame({ username, onBack }: { username: string, onBack: () => void }) {
   // Game phases
   const [gamePhase, setGamePhase] = useState<"setup" | "playing">("setup");
-  // Game type (single or multiplayer)
+  // Game type (single or multiplayer) - disable multiplayer on GitHub Pages
+  const isGitHubDeployment = isGitHubPages();
   const [playMode, setPlayMode] = useState<"single" | "multi">("single");
   const [targetScore, setTargetScore] = useState<number>(100);
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null);
