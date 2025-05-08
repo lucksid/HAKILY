@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { generateRandomLetters } from "./lib/utils";
-import { isValidWord } from "./lib/dictionary";
+import { isValidWord, checkWordWithAPI } from "./lib/dictionary";
+import { calculateWordScore } from "./lib/gameUtils";
 
 // Simple Login Form Component
 function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {

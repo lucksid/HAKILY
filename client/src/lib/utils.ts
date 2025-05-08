@@ -1,36 +1,51 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-const getLocalStorage = (key: string): any =>
-  JSON.parse(window.localStorage.getItem(key) || "null");
-const setLocalStorage = (key: string, value: any): void =>
-  window.localStorage.setItem(key, JSON.stringify(value));
-
-// Generate random letters for word game
+/**
+ * Generate an array of random letters with a good mix of vowels and consonants
+ * @param count Number of letters to generate
+ * @returns Array of random letters
+ */
 export function generateRandomLetters(count: number = 7): string[] {
-  const vowels = 'AEIOU';
-  const consonants = 'BCDFGHJKLMNPQRSTVWXYZ';
+  // Define vowels and consonants
+  const vowels = "AEIOU";
+  const consonants = "BCDFGHJKLMNPQRSTVWXYZ";
+  
+  // Ensure a good mix of vowels and consonants
+  // For 7 letters, we want 2-3 vowels and 4-5 consonants
+  const targetVowelCount = Math.floor(count * 0.4); // ~40% vowels
+  
   const letters: string[] = [];
+  let vowelCount = 0;
   
-  // Ensure at least 2 vowels
-  for (let i = 0; i < 2; i++) {
-    letters.push(vowels[Math.floor(Math.random() * vowels.length)]);
+  // Add random letters
+  for (let i = 0; i < count; i++) {
+    // Determine if we need to force a vowel or consonant
+    const remainingSpots = count - i;
+    const neededVowels = targetVowelCount - vowelCount;
+    const mustBeVowel = neededVowels >= remainingSpots;
+    const mustBeConsonant = vowelCount >= targetVowelCount;
+    
+    let letter: string;
+    
+    if (mustBeVowel) {
+      // Must add a vowel
+      letter = vowels.charAt(Math.floor(Math.random() * vowels.length));
+      vowelCount++;
+    } else if (mustBeConsonant) {
+      // Must add a consonant
+      letter = consonants.charAt(Math.floor(Math.random() * consonants.length));
+    } else {
+      // Can be either
+      if (Math.random() < 0.4) {
+        // Add a vowel
+        letter = vowels.charAt(Math.floor(Math.random() * vowels.length));
+        vowelCount++;
+      } else {
+        // Add a consonant
+        letter = consonants.charAt(Math.floor(Math.random() * consonants.length));
+      }
+    }
+    
+    letters.push(letter);
   }
   
-  // Fill remaining letters with a mix of vowels and consonants
-  for (let i = letters.length; i < count; i++) {
-    // 30% chance of vowel, 70% chance of consonant
-    const useVowel = Math.random() < 0.3;
-    const source = useVowel ? vowels : consonants;
-    letters.push(source[Math.floor(Math.random() * source.length)]);
-  }
-  
-  // Shuffle the array
-  return letters.sort(() => Math.random() - 0.5);
+  return letters;
 }
-
-export { getLocalStorage, setLocalStorage };
