@@ -18,7 +18,7 @@ function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
   
   return (
     <div className="p-8 bg-white rounded-lg shadow-md max-w-md w-full">
-      <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">Hakil<span className="relative">y<span className="absolute -top-4 right-[-28px] text-xl">💡</span></span></h1>
+      <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">Hakil<span className="relative">y<span className="absolute -top-4 right-[-22px] text-2xl">💡</span></span></h1>
       <p className="text-gray-600 mb-4 text-center">
         Challenge yourself. Challenge your pals!
       </p>
@@ -243,7 +243,7 @@ function GameLobby({
   return (
     <div className="max-w-6xl w-full mx-auto" ref={lobbyContainerRef}>
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-600">Hakil<span className="relative">y<span className="absolute -top-3 right-[-22px] text-base">💡</span></span></h1>
+        <h1 className="text-2xl font-bold text-blue-600">Hakil<span className="relative">y<span className="absolute -top-3 right-[-18px] text-lg">💡</span></span></h1>
         <div className="flex items-center space-x-4">
           <div>
             <span className="text-sm text-gray-500">Welcome,</span>
