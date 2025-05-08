@@ -18,9 +18,9 @@ function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
   
   return (
     <div className="p-8 bg-white rounded-lg shadow-md max-w-md w-full">
-      <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">EduPlay</h1>
+      <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">Hakily</h1>
       <p className="text-gray-600 mb-4 text-center">
-        Multiplayer Educational Game Platform
+        Challenge yourself. Challenge your pals!
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -243,7 +243,7 @@ function GameLobby({
   return (
     <div className="max-w-6xl w-full mx-auto" ref={lobbyContainerRef}>
       <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-600">EduPlay</h1>
+        <h1 className="text-2xl font-bold text-blue-600">Hakily</h1>
         <div className="flex items-center space-x-4">
           <div>
             <span className="text-sm text-gray-500">Welcome,</span>
