@@ -3,6 +3,7 @@ import { generateRandomLetters } from "./lib/utils";
 import { isValidWord, checkWordWithAPI } from "./lib/dictionary";
 import { calculateWordScore } from "./lib/gameUtils";
 import { generateMathProblem, MathProblem } from "./lib/mathProblems";
+import { QuizQuestion, QuizCategory, getRandomQuestion } from "./lib/quizQuestions";
 
 // Simple Login Form Component
 function LoginForm({ onLogin }: { onLogin: (username: string) => void }) {
@@ -324,7 +325,7 @@ function GameLobby({
                 
                 <div 
                   className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer transform transition-transform hover:scale-105"
-                  onClick={() => alert("Quiz game coming soon!")}
+                  onClick={() => onStartGame("quiz")}
                 >
                   <div className="text-4xl mb-2">❓</div>
                   <h3 className="font-bold">Quiz Masters</h3>
@@ -1137,6 +1138,8 @@ function App() {
     content = <WordGame username={username} onBack={backToLobby} />;
   } else if (currentGame === "math") {
     content = <MathGame username={username} onBack={backToLobby} />;
+  } else if (currentGame === "quiz") {
+    content = <QuizGame username={username} onBack={backToLobby} />;
   } else {
     content = (
       <GameLobby 
@@ -1892,6 +1895,728 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 ) : (
                   <div className="text-center text-gray-400 py-8">
                     No answers submitted yet
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 bg-blue-600 text-white font-medium">
+                Score Progress
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-center p-2 bg-blue-50 rounded mb-2">
+                  <span className="font-medium">{username} (You)</span>
+                  <span className="font-bold">
+                    {totalScore} / {targetScore} pts
+                  </span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                  <div 
+                    className="bg-blue-600 h-4 rounded-full" 
+                    style={{ width: `${Math.min(100, (totalScore / targetScore) * 100)}%` }}
+                  />
+                </div>
+                
+                <div className="text-center text-sm text-gray-500">
+                  {totalScore >= targetScore 
+                    ? "Target score reached!" 
+                    : `${targetScore - totalScore} points to win`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="md:col-span-1">
+          {/* In-game chat - only show in multiplayer mode when chat is toggled on */}
+          {playMode === 'multi' ? (
+            showChat ? (
+              <ChatBox 
+                username={username} 
+                gameId={gameId}
+                inGame={true}
+              />
+            ) : (
+              <div 
+                className="bg-white rounded-lg shadow-md p-4 text-center cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                  setShowChat(true);
+                  setUnreadChatCount(0);
+                }}
+              >
+                <div className="text-2xl mb-3">💬</div>
+                <h3 className="font-bold text-lg mb-1">Game Chat Hidden</h3>
+                <p className="text-sm text-gray-600">
+                  Click here or use the chat icon in the header to show chat
+                  {unreadChatCount > 0 && (
+                    <span className="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                      {unreadChatCount} new
+                    </span>
+                  )}
+                </p>
+              </div>
+            )
+          ) : (
+            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="text-2xl mb-3">👤</div>
+              <h3 className="font-bold text-lg mb-1">Single Player Mode</h3>
+              <p className="text-sm text-gray-600">
+                You're playing in single player mode. Switch to multiplayer to chat with other players!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Quiz Game Component
+function QuizGame({ username, onBack }: { username: string, onBack: () => void }) {
+  // Game phases
+  const [gamePhase, setGamePhase] = useState<"setup" | "playing">("setup");
+  // Game type (single or multiplayer)
+  const [playMode, setPlayMode] = useState<"single" | "multi">("single");
+  const [targetScore, setTargetScore] = useState<number>(100);
+  const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(30); // 30 seconds per question
+  const [roundEnded, setRoundEnded] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [totalScore, setTotalScore] = useState(0);
+  const [submittedAnswers, setSubmittedAnswers] = useState<{question: string, selectedOption: number, correctOption: number, isCorrect: boolean, score: number}[]>([]);
+  const [showExitWarning, setShowExitWarning] = useState<boolean>(false);
+  const [gameId, setGameId] = useState<string>(`quiz-${Date.now()}`);
+  const [showChat, setShowChat] = useState<boolean>(false);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(2);
+  const [currentRound, setCurrentRound] = useState(1);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState<number | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<QuizCategory[]>(["science", "history", "geography", "entertainment"]);
+  
+  // Ref for game container to scroll to top
+  const gameContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Generate a new quiz question
+  const generateNewQuestion = () => {
+    try {
+      // Get a random question from the selected categories
+      const question = getRandomQuestion();
+      console.log("Generated new quiz question:", question);
+      
+      // Update the state with the new question
+      setCurrentQuestion(question);
+      
+      return question;
+    } catch (error) {
+      console.error("Error generating quiz question:", error);
+      
+      // Fallback question in case of error
+      const fallbackQuestion = {
+        question: "What is the capital of France?",
+        options: ["Berlin", "London", "Paris", "Madrid"],
+        correctOption: 2
+      };
+      setCurrentQuestion(fallbackQuestion);
+      return fallbackQuestion;
+    }
+  };
+  
+  // Submit the selected answer
+  const submitAnswer = () => {
+    if (roundEnded || hasSubmitted || selectedOption === null || !currentQuestion) return;
+    
+    const isCorrect = selectedOption === currentQuestion.correctOption;
+    
+    // Calculate score: 10 points for correct answer, 0 for incorrect
+    // Add difficulty bonus: easy=0, medium=5, hard=10
+    const difficultyBonus = difficulty === 'easy' ? 0 : difficulty === 'medium' ? 5 : 10;
+    const score = isCorrect ? 10 + difficultyBonus : 0;
+    
+    // Add to submitted answers
+    setSubmittedAnswers([
+      ...submittedAnswers,
+      {
+        question: currentQuestion.question,
+        selectedOption,
+        correctOption: currentQuestion.correctOption,
+        isCorrect,
+        score
+      }
+    ]);
+    
+    // Update total score
+    setTotalScore(prevScore => prevScore + score);
+    
+    // Mark as submitted
+    setHasSubmitted(true);
+    
+    // Show feedback
+    setFeedback({
+      message: isCorrect 
+        ? `Correct! +${score} points` 
+        : `Incorrect. The correct answer was: ${currentQuestion.options[currentQuestion.correctOption]}`,
+      type: isCorrect ? 'success' : 'error'
+    });
+    
+    setTimeout(() => setFeedback(null), 3000);
+    
+    // In multiplayer mode, start auto-advance after submission
+    if (playMode === 'multi') {
+      setRoundEnded(true); // End the round after submission
+      
+      // Show feedback for auto-advance
+      setTimeout(() => {
+        setFeedback({
+          message: `Next question in 5 seconds...`,
+          type: "info"
+        });
+      }, 3500);
+      
+      // Start countdown from 5
+      setTimeout(() => {
+        setAutoAdvanceCountdown(5);
+        
+        // Create a 5-second countdown
+        const countdownInterval = setInterval(() => {
+          setAutoAdvanceCountdown(prevCount => {
+            if (prevCount === null || prevCount <= 1) {
+              clearInterval(countdownInterval);
+              return null;
+            }
+            return prevCount - 1;
+          });
+        }, 1000);
+        
+        // Advance to next round after 5 seconds
+        setTimeout(() => {
+          clearInterval(countdownInterval);
+          setAutoAdvanceCountdown(null);
+          startNewRound();
+        }, 5000);
+      }, 3500);
+    }
+  };
+  
+  // Reset the game for a new round
+  const startNewRound = () => {
+    // Set time based on difficulty
+    const timeForDifficulty = difficulty === 'easy' ? 30 : difficulty === 'medium' ? 25 : 20;
+    setTimeLeft(timeForDifficulty);
+    setRoundEnded(false);
+    setSelectedOption(null);
+    setHasSubmitted(false); // Reset submission state
+    setCurrentRound(prevRound => prevRound + 1);
+    generateNewQuestion(); // Generate new question for the new round
+    
+    setFeedback({
+      message: `Round ${currentRound + 1} started! You have ${timeForDifficulty} seconds`,
+      type: "info"
+    });
+    setTimeout(() => setFeedback(null), 3000);
+    
+    // Force window to scroll to top
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+  
+  // Simulate countdown timer
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Time's up!
+      setRoundEnded(true);
+      
+      // In multiplayer mode, automatically advance to next round after 5 seconds
+      if (playMode === 'multi') {
+        // Update feedback to inform player of auto-advance
+        setFeedback({
+          message: `Time's up! Next question in 5 seconds...`,
+          type: "info"
+        });
+        
+        // Start countdown from 5
+        setAutoAdvanceCountdown(5);
+        
+        // Create a 5-second countdown
+        const countdownInterval = setInterval(() => {
+          setAutoAdvanceCountdown(prevCount => {
+            if (prevCount === null || prevCount <= 1) {
+              clearInterval(countdownInterval);
+              return null;
+            }
+            return prevCount - 1;
+          });
+        }, 1000);
+        
+        // Advance to next round after 5 seconds
+        setTimeout(() => {
+          clearInterval(countdownInterval);
+          setAutoAdvanceCountdown(null);
+          startNewRound();
+        }, 5000);
+      }
+    }
+  }, [timeLeft, playMode]);
+  
+  // Initialize the game with the first question
+  useEffect(() => {
+    if (gamePhase === "playing" && !currentQuestion) {
+      generateNewQuestion();
+    }
+  }, [gamePhase]);
+  
+  // Check if player reached the target score
+  useEffect(() => {
+    if (gamePhase === "playing" && totalScore >= targetScore) {
+      setFeedback({
+        message: `Congratulations! You've reached the target score of ${targetScore} points!`,
+        type: "success"
+      });
+      setTimeout(() => {
+        if (confirm(`You've reached the target score of ${targetScore} points! Play again?`)) {
+          // Reset game for a new game
+          setGamePhase("setup");
+          setSubmittedAnswers([]);
+          setTotalScore(0);
+          setCurrentRound(1);
+        }
+      }, 1000);
+    }
+  }, [totalScore, targetScore, gamePhase]);
+  
+  // Game Setup Screen
+  if (gamePhase === "setup") {
+    return (
+      <div className="max-w-4xl w-full mx-auto" ref={gameContainerRef}>
+        <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+          <div className="flex items-center">
+            <button
+              onClick={onBack}  
+              className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            >
+              ← Back
+            </button>
+            <h1 className="text-2xl font-bold text-blue-600">Quiz Challenge</h1>
+          </div>
+          <div className="text-sm">
+            <span className="text-gray-500">Player:</span>
+            <span className="ml-1 font-medium">{username}</span>
+          </div>
+        </header>
+        
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-center mb-6">Game Setup</h2>
+          
+          <div className="max-w-md mx-auto space-y-6">
+            {/* Play Mode Selection */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">Game Mode</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  className={`p-4 rounded-lg border-2 text-center ${
+                    playMode === 'single'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => {
+                    setPlayMode('single');
+                    // Force window to scroll to top
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  <div className="text-2xl mb-2">👤</div>
+                  <div className="font-medium">Single Player</div>
+                  <div className="text-xs text-gray-500 mt-1">Play solo and challenge yourself</div>
+                </button>
+                
+                <button
+                  className={`p-4 rounded-lg border-2 text-center ${
+                    playMode === 'multi'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => {
+                    setPlayMode('multi');
+                    // Force window to scroll to top
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 100);
+                  }}
+                >
+                  <div className="text-2xl mb-2">👥</div>
+                  <div className="font-medium">Multiplayer</div>
+                  <div className="text-xs text-gray-500 mt-1">Play with friends online</div>
+                </button>
+              </div>
+            </div>
+            
+            {/* Difficulty Selection */}
+            <div>
+              <h3 className="font-medium text-gray-700 mb-3">Difficulty</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  className={`p-3 rounded-lg border-2 text-center ${
+                    difficulty === 'easy'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setDifficulty('easy')}
+                >
+                  <div className="font-medium">Easy</div>
+                  <div className="text-xs text-gray-500 mt-1">30 seconds</div>
+                </button>
+                
+                <button
+                  className={`p-3 rounded-lg border-2 text-center ${
+                    difficulty === 'medium'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setDifficulty('medium')}
+                >
+                  <div className="font-medium">Medium</div>
+                  <div className="text-xs text-gray-500 mt-1">25 seconds</div>
+                </button>
+                
+                <button
+                  className={`p-3 rounded-lg border-2 text-center ${
+                    difficulty === 'hard'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setDifficulty('hard')}
+                >
+                  <div className="font-medium">Hard</div>
+                  <div className="text-xs text-gray-500 mt-1">20 seconds</div>
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-gray-700 mb-2">Target Score to Win</h3>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {[100, 150, 200, 250, 300, 350, 400, 450, 500].map(score => (
+                  <button
+                    key={score}
+                    className={`px-4 py-2 rounded-md ${
+                      targetScore === score 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    }`}
+                    onClick={() => {
+                      setTargetScore(score);
+                      // Force window to scroll to top
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }, 100);
+                    }}
+                  >
+                    {score}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-md">
+              <h3 className="font-bold text-blue-800 mb-2">Game Overview</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                Try to reach {targetScore} points {playMode === 'multi' ? 'before your opponents!' : 'to win!'}
+              </p>
+              <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+                <li>Answer questions from various categories</li>
+                <li>Each correct answer is worth 10 points</li>
+                <li>Difficulty bonus: Medium (+5), Hard (+10)</li>
+                <li>You have {difficulty === 'easy' ? '30' : difficulty === 'medium' ? '25' : '20'} seconds per question</li>
+                {playMode === 'multi' && <li>Chat with other players during the game</li>}
+              </ul>
+            </div>
+            
+            <button 
+              className="w-full py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors"
+              onClick={() => {
+                setGamePhase("playing");
+                setSubmittedAnswers([]);
+                setTotalScore(0);
+                setCurrentRound(1);
+                
+                // Force window to scroll to top
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
+              }}
+            >
+              {playMode === 'single' ? 'Start Game' : 'Create Multiplayer Game'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Main Game Screen
+  return (
+    <div className="max-w-4xl w-full mx-auto" ref={gameContainerRef}>
+      <header className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
+        <div className="flex items-center">
+          <button
+            onClick={() => {
+              // Show warning dialog if game is in progress and target not reached
+              if (gamePhase === "playing" && totalScore < targetScore) {
+                setShowExitWarning(true);
+              } else {
+                onBack();
+              }
+            }}
+            className="mr-4 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+          >
+            ← Back
+          </button>
+          <h1 className="text-2xl font-bold text-blue-600">Quiz Challenge</h1>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            timeLeft > 10 
+              ? "bg-blue-100 text-blue-800" 
+              : timeLeft > 5 
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-red-100 text-red-800"
+          }`}>
+            Time: {timeLeft}s
+          </div>
+          
+          {/* Chat notification icon in multiplayer mode */}
+          {playMode === 'multi' && (
+            <button 
+              className="relative p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 flex items-center justify-center"
+              onClick={() => {
+                // Toggle chat visibility
+                setShowChat(!showChat);
+                
+                // If opening chat, reset unread count
+                if (!showChat) {
+                  setUnreadChatCount(0);
+                }
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9.06 9.06 0 0 0 8 15z"/>
+              </svg>
+              
+              {/* Notification badge */}
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
+          )}
+          
+          <div className="text-sm">
+            <span className="text-gray-500">Player:</span>
+            <span className="ml-1 font-medium">{username}</span>
+          </div>
+        </div>
+      </header>
+      
+      {/* Exit Warning Dialog */}
+      {showExitWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-red-600 mb-4">Warning: Game in Progress</h3>
+            <p className="mb-6 text-gray-700">
+              You're about to leave the game before reaching the target score of {targetScore} points. 
+              Your current progress will be lost and you won't be able to return to this game.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowExitWarning(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Continue Playing
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitWarning(false);
+                  onBack();
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                Leave Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-3">
+          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+            {/* Feedback message display */}
+            {feedback && (
+              <div className={`mb-4 p-3 rounded-md text-center font-medium ${
+                feedback.type === 'success' ? 'bg-green-100 text-green-800' :
+                feedback.type === 'error' ? 'bg-red-100 text-red-800' :
+                'bg-blue-100 text-blue-800'
+              }`}>
+                {feedback.message}
+              </div>
+            )}
+            
+            <div className="mb-8">
+              <h2 className="text-center text-xl font-bold mb-2">
+                Quiz - Round {currentRound}
+              </h2>
+              <div className="w-full bg-gray-200 h-2 rounded-full mb-1">
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${Math.min(100, (totalScore / targetScore) * 100)}%` }}
+                />
+              </div>
+              <div className="text-center text-sm text-gray-500">
+                {totalScore} / {targetScore} points
+              </div>
+            </div>
+            
+            {/* Question display */}
+            {currentQuestion && (
+              <div className="mb-6">
+                <div className="text-lg font-bold mb-4 text-gray-800 p-4 bg-blue-50 rounded-md">
+                  {currentQuestion.question}
+                </div>
+                
+                {/* Answer options */}
+                <div className="space-y-3">
+                  {currentQuestion.options.map((option, index) => (
+                    <button
+                      key={index}
+                      className={`w-full p-3 text-left rounded-md transition-colors ${
+                        hasSubmitted
+                          ? index === currentQuestion.correctOption
+                            ? "bg-green-100 border-2 border-green-500 text-green-800"
+                            : selectedOption === index
+                              ? "bg-red-100 border-2 border-red-500 text-red-800"
+                              : "bg-gray-100 text-gray-700"
+                          : selectedOption === index
+                            ? "bg-blue-100 border-2 border-blue-500 text-blue-800"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                      }`}
+                      onClick={() => {
+                        if (!hasSubmitted && !roundEnded) {
+                          setSelectedOption(index);
+                        }
+                      }}
+                      disabled={hasSubmitted || roundEnded}
+                    >
+                      <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
+                      {option}
+                      
+                      {/* Show indicators once submitted */}
+                      {hasSubmitted && (
+                        <span className="float-right">
+                          {index === currentQuestion.correctOption ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="inline-block text-green-600" viewBox="0 0 16 16">
+                              <path d="M13.485 1.431a1.473 1.473 0 0 1 2.104 2.062l-7.84 9.801a1.473 1.473 0 0 1-2.12.04L.431 8.138a1.473 1.473 0 0 1 2.084-2.083l4.111 4.112 6.82-8.69a.486.486 0 0 1 .04-.045z"/>
+                            </svg>
+                          ) : selectedOption === index ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="inline-block text-red-600" viewBox="0 0 16 16">
+                              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                          ) : null}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Action buttons */}
+                <div className="flex justify-center mt-6">
+                  {roundEnded ? (
+                    playMode === 'multi' && autoAdvanceCountdown ? (
+                      <div className="px-6 py-3 bg-gray-500 text-white rounded-md text-lg font-medium flex items-center space-x-2">
+                        <span>Next question in</span>
+                        <span className="bg-gray-700 text-white px-3 py-1 rounded-full font-bold animate-pulse">
+                          {autoAdvanceCountdown}
+                        </span>
+                        <span>seconds</span>
+                      </div>
+                    ) : (
+                      <button
+                        className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                        onClick={startNewRound}
+                      >
+                        Next Question
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      className={`px-6 py-2 rounded-md ${
+                        selectedOption !== null && !hasSubmitted
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-blue-200 text-blue-500 cursor-not-allowed"
+                      }`}
+                      onClick={submitAnswer}
+                      disabled={selectedOption === null || hasSubmitted}
+                    >
+                      {hasSubmitted ? "Already Submitted" : "Submit Answer"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Instructions */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="font-bold text-blue-800 mb-2">Game Rules</h3>
+              <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+                <li>Select the correct answer to each question</li>
+                <li>Correct answers are worth 10 points</li>
+                <li>Difficulty bonus: Medium (+5), Hard (+10)</li>
+                <li>First to reach {targetScore} points wins!</li>
+                <li>You have {difficulty === 'easy' ? '30' : difficulty === 'medium' ? '25' : '20'} seconds to answer each question</li>
+                <li>You can only submit one answer per question</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 bg-blue-600 text-white font-medium flex justify-between items-center">
+                <span>Answered Questions</span>
+                <span className="bg-white text-blue-800 px-2 py-1 rounded-md text-sm font-bold">
+                  Target: {targetScore}
+                </span>
+              </div>
+              <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                {submittedAnswers.length > 0 ? (
+                  submittedAnswers.map((entry, i) => (
+                    <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span className="font-medium truncate max-w-[160px]">{entry.question}</span>
+                      {entry.isCorrect ? (
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
+                          +{entry.score} pts
+                        </span>
+                      ) : (
+                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                          Incorrect
+                        </span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    No questions answered yet
                   </div>
                 )}
               </div>
