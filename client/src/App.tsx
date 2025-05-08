@@ -641,7 +641,7 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+        <div className="md:col-span-3">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="mb-8">
               <h2 className="text-center text-xl font-bold mb-2">
@@ -764,73 +764,85 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
           </div>
         </div>
         
-        <div className="md:col-span-1">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div className="p-4 bg-blue-600 text-white font-medium flex justify-between items-center">
-              <span>Submitted Words</span>
-              <span className="bg-white text-blue-800 px-2 py-1 rounded-md text-sm font-bold">
-                Target: {targetScore}
-              </span>
-            </div>
-            <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
-              {submittedWords.length > 0 ? (
-                submittedWords.map((entry, i) => (
-                  <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span className="font-medium">{entry.word}</span>
-                    {entry.isValid ? (
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
-                        +{entry.score} pts
-                      </span>
-                    ) : (
-                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
-                        Invalid
-                      </span>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-400 py-8">
-                  No words submitted yet
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div className="p-4 bg-blue-600 text-white font-medium">
-              Score Progress
-            </div>
-            <div className="p-4">
-              <div className="flex justify-between items-center p-2 bg-blue-50 rounded mb-2">
-                <span className="font-medium">{username} (You)</span>
-                <span className="font-bold">
-                  {totalScore} / {targetScore} pts
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 bg-blue-600 text-white font-medium flex justify-between items-center">
+                <span>Submitted Words</span>
+                <span className="bg-white text-blue-800 px-2 py-1 rounded-md text-sm font-bold">
+                  Target: {targetScore}
                 </span>
               </div>
-              
-              {/* Progress bar */}
-              <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-                <div 
-                  className="bg-blue-600 h-4 rounded-full" 
-                  style={{ width: `${Math.min(100, (totalScore / targetScore) * 100)}%` }}
-                />
+              <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                {submittedWords.length > 0 ? (
+                  submittedWords.map((entry, i) => (
+                    <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span className="font-medium">{entry.word}</span>
+                      {entry.isValid ? (
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">
+                          +{entry.score} pts
+                        </span>
+                      ) : (
+                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                          Invalid
+                        </span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    No words submitted yet
+                  </div>
+                )}
               </div>
-              
-              <div className="text-center text-sm text-gray-500">
-                {totalScore >= targetScore 
-                  ? "Target score reached!" 
-                  : `${targetScore - totalScore} points to win`}
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-4 bg-blue-600 text-white font-medium">
+                Score Progress
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-center p-2 bg-blue-50 rounded mb-2">
+                  <span className="font-medium">{username} (You)</span>
+                  <span className="font-bold">
+                    {totalScore} / {targetScore} pts
+                  </span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                  <div 
+                    className="bg-blue-600 h-4 rounded-full" 
+                    style={{ width: `${Math.min(100, (totalScore / targetScore) * 100)}%` }}
+                  />
+                </div>
+                
+                <div className="text-center text-sm text-gray-500">
+                  {totalScore >= targetScore 
+                    ? "Target score reached!" 
+                    : `${targetScore - totalScore} points to win`}
+                </div>
               </div>
             </div>
           </div>
-          
+        </div>
+        
+        <div className="md:col-span-1">
           {/* In-game chat - only show in multiplayer mode */}
-          {playMode === 'multi' && (
+          {playMode === 'multi' ? (
             <ChatBox 
               username={username} 
               gameId={gameId}
               inGame={true}
             />
+          ) : (
+            <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="text-2xl mb-3">👤</div>
+              <h3 className="font-bold text-lg mb-1">Single Player Mode</h3>
+              <p className="text-sm text-gray-600">
+                You're playing in single player mode. Switch to multiplayer to chat with other players!
+              </p>
+            </div>
           )}
         </div>
       </div>
