@@ -206,7 +206,13 @@ function GameLobby({
               ? 'text-blue-600 border-b-2 border-blue-600' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
-          onClick={() => setActiveTab('games')}
+          onClick={() => {
+            setActiveTab('games');
+            // Scroll to top when switching tabs
+            if (lobbyContainerRef.current) {
+              lobbyContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
         >
           Play Games
         </button>
@@ -216,7 +222,13 @@ function GameLobby({
               ? 'text-blue-600 border-b-2 border-blue-600' 
               : 'text-gray-500 hover:text-gray-700'
           }`}
-          onClick={() => setActiveTab('history')}
+          onClick={() => {
+            setActiveTab('history');
+            // Scroll to top when switching tabs
+            if (lobbyContainerRef.current) {
+              lobbyContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
         >
           Game History
         </button>
@@ -572,6 +584,11 @@ function WordGame({ username, onBack }: { username: string, onBack: () => void }
                 setSubmittedWords([]);
                 setTotalScore(0);
                 startNewRound();
+                
+                // Ensure we scroll to the top when starting multiplayer game
+                if (gameContainerRef.current) {
+                  gameContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
               }}
             >
               {playMode === 'single' ? 'Start Game' : 'Create Multiplayer Game'}
