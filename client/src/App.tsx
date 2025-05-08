@@ -1222,6 +1222,18 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
     // Clear feedback after a few seconds
     setTimeout(() => setFeedback(null), 3000);
     
+    // Auto-advance to next problem after 5 seconds in multiplayer mode
+    if (playMode === 'multi') {
+      setFeedback({
+        message: `Next problem in 5 seconds...`,
+        type: "info"
+      });
+      
+      setTimeout(() => {
+        startNewRound();
+      }, 5000);
+    }
+    
     // Log that the round has ended for debugging
     console.log("Round ended after answer submission");
   };
@@ -1273,9 +1285,25 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
           type: "error"
         });
         setTimeout(() => setFeedback(null), 3000);
+        
+        // In multiplayer mode, automatically advance to next round after 5 seconds
+        if (playMode === 'multi') {
+          // Update feedback to inform player of auto-advance
+          setTimeout(() => {
+            setFeedback({
+              message: `Next problem in 5 seconds...`,
+              type: "info"
+            });
+          }, 3500);
+          
+          // Start new round after 5 seconds
+          setTimeout(() => {
+            startNewRound();
+          }, 5000);
+        }
       }
     }
-  }, [timeLeft, hasSubmitted, roundEnded, gamePhase, currentProblem]);
+  }, [timeLeft, hasSubmitted, roundEnded, gamePhase, currentProblem, playMode]);
   
   // Check if player reached the target score
   useEffect(() => {
@@ -1462,7 +1490,12 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                 <li>Each correct answer earns 10 base points</li>
                 <li>Faster answers earn more bonus points (up to +5)</li>
                 <li>You have 30 seconds per problem</li>
-                {playMode === 'multi' && <li>Chat with other players during the game</li>}
+                {playMode === 'multi' && (
+                  <>
+                    <li>Chat with other players during the game</li>
+                    <li>Next problem auto-advances after 5 seconds</li>
+                  </>
+                )}
               </ul>
               
               <div className="mt-2 p-2 bg-blue-100 rounded-md text-xs text-blue-800">
@@ -1681,6 +1714,9 @@ function MathGame({ username, onBack }: { username: string, onBack: () => void }
                   <li>Answering quickly earns you bonus points (up to +5)</li>
                   <li>You can only submit one answer per problem</li>
                   <li>First to reach {targetScore} points wins!</li>
+                  {playMode === 'multi' && (
+                    <li className="text-blue-800 font-medium">Next problem auto-advances after 5 seconds!</li>
+                  )}
                   <li className="text-xs mt-1 text-blue-600">Playing on {difficulty} difficulty ({
                     difficulty === 'easy' ? 'smaller numbers' :
                     difficulty === 'medium' ? 'medium-sized numbers' :
